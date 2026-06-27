@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>称骨算命</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #1a1a2e;
+    color: #e0d5c1;
+    font-family: 'PingFang SC', 'Microsoft YaHei', 'SimHei', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+
+  .title-wrap {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .title-wrap h1 {
+    font-size: 28px;
+    color: #d4a04a;
+    letter-spacing: 6px;
+    margin-bottom: 4px;
+  }
+  .title-wrap .sub {
+    font-size: 13px;
+    color: #8a7a6a;
+    letter-spacing: 2px;
+  }
+
+  .card {
+    background: #2a2440;
+    border: 1px solid #3d3455;
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%;
+    max-width: 440px;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .card-title {
+    font-size: 15px;
+    color: #d4a04a;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #3d3455;
+    letter-spacing: 1px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+    align-items: center;
+  }
+
+  .input-row label {
+    font-size: 13px;
+    color: #a09080;
+    width: 50px;
+    flex-shrink: 0;
+  }
+
+  input, select {
+    flex: 1;
+    background: #1a1a2e;
+    border: 1px solid #4a3d6a;
+    border-radius: 8px;
+    color: #e0d5c1;
+    font-size: 14px;
+    padding: 8px 12px;
+    outline: none;
+    font-family: inherit;
+  }
+  input:focus, select:focus {
+    border-color: #d4a04a;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #d4a04a, #b8802a);
+    color: #1a1a2e;
+    font-weight: bold;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-secondary {
+    background: #3d3455;
+    color: #a09080;
+  }
+  .btn-secondary:hover { background: #4d4466; }
+
+  .result {
+    display: none;
+    margin-top: 16px;
+  }
+  .result.show { display: block; }
+
+  .result-header {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #2a1f3d, #1e1a30);
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+
+  .bone-weight {
+    font-size: 52px;
+    font-weight: bold;
+    color: #d4a04a;
+    letter-spacing: 2px;
+    line-height: 1;
+    text-shadow: 0 0 20px rgba(212,160,74,0.5);
+  }
+  .bone-unit {
+    font-size: 16px;
+    color: #8a7a6a;
+    margin-top: 4px;
+  }
+  .bone-label {
+    font-size: 13px;
+    color: #a09080;
+    margin-top: 10px;
+    letter-spacing: 1px;
+  }
+
+  .bazi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 14px 0;
+  }
+  .bazi-cell {
+    background: #1a1a2e;
+    border-radius: 8px;
+    padding: 10px 4px;
+    text-align: center;
+  }
+  .bazi-cell .label {
+    font-size: 11px;
+    color: #8a7a6a;
+    margin-bottom: 4px;
+  }
+  .bazi-cell .pillar {
+    font-size: 18px;
+    color: #d4a04a;
+    letter-spacing: 2px;
+  }
+  .bazi-cell .weight {
+    font-size: 12px;
+    color: #a09080;
+    margin-top: 3px;
+  }
+
+  .commentary {
+    background: #1a1a2e;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 14px;
+    color: #c0b090;
+    line-height: 1.9;
+    border-left: 3px solid #d4a04a;
+  }
+
+  .commentary-title {
+    font-size: 14px;
+    color: #d4a04a;
+    margin-bottom: 8px;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+
+  .tips {
+    font-size: 12px;
+    color: #6a5a4a;
+    text-align: center;
+    margin-top: 14px;
+    line-height: 1.7;
+  }
+
+  /* Calendar toggle */
+  .toggle-row {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 16px;
+  }
+  .toggle-btn {
+    padding: 6px 18px;
+    border: 1px solid #4a3d6a;
+    background: #1a1a2e;
+    color: #8a7a6a;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+  .toggle-btn:first-child { border-radius: 8px 0 0 8px; }
+  .toggle-btn:last-child { border-radius: 0 8px 8px 0; border-left: none; }
+  .toggle-btn.active {
+    background: #d4a04a;
+    color: #1a1a2e;
+    border-color: #d4a04a;
+    font-weight: bold;
+  }
+  .toggle-btn:hover:not(.active) { background: #2a2440; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="title-wrap">
+  <h1>称骨算命</h1>
+  <div class="sub">BRTH · FATE · WEIGHT</div>
+</div>
+
+<div class="card">
+  <div class="card-title">输入出生信息</div>
+
+  <div class="toggle-row">
+    <button class="toggle-btn active" id="btn-female" onclick="setGender('female')">女命</button>
+    <button class="toggle-btn" id="btn-male" onclick="setGender('male')">男命</button>
+  </div>
+
+  <div class="toggle-row">
+    <button class="toggle-btn active" onclick="setMode('lunar')">按农历</button>
+    <button class="toggle-btn" onclick="setMode('solar')">按公历</button>
+  </div>
+
+  <!-- 农历输入 -->
+  <div id="sec-lunar" class="section active">
+    <div class="input-row">
+      <label>年</label>
+      <select id="lyear"></select>
+    </div>
+    <div class="input-row">
+      <label>月</label>
+      <select id="lmonth"></select>
+    </div>
+    <div class="input-row">
+      <label>日</label>
+      <select id="lday"></select>
+    </div>
+    <div class="input-row">
+      <label>时</label>
+      <select id="lhour"></select>
+    </div>
+    <div class="tips" id="solar-hint" style="display:none"></div>
+  </div>
+
+  <!-- 公历输入 -->
+  <div id="sec-solar" class="section">
+    <div class="input-row">
+      <label>年</label>
+      <input type="number" id="syear" min="1900" max="2100" placeholder="例: 1990">
+    </div>
+    <div class="input-row">
+      <label>月</label>
+      <input type="number" id="smonth" min="1" max="12" placeholder="例: 8">
+    </div>
+    <div class="input-row">
+      <label>日</label>
+      <input type="number" id="sday" min="1" max="31" placeholder="例: 15">
+    </div>
+    <div class="input-row">
+      <label>时</label>
+      <select id="shour"></select>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="reset()">重置</button>
+    <button class="btn btn-primary" onclick="calculate()">开始测算</button>
+  </div>
+</div>
+
+<div class="card" id="result-card" style="display:none">
+  <div class="card-title">测算结果</div>
+
+  <div class="result-header">
+    <div class="bone-weight" id="bone-weight">--</div>
+    <div class="bone-unit">两 · 钱</div>
+    <div class="bone-label" id="bone-level">-</div>
+  </div>
+
+  <div class="bazi-grid">
+    <div class="bazi-cell">
+      <div class="label">年柱</div>
+      <div class="pillar" id="bz-year">--</div>
+      <div class="weight" id="wt-year">--</div>
+    </div>
+    <div class="bazi-cell">
+      <div class="label">月柱</div>
+      <div class="pillar" id="bz-month">--</div>
+      <div class="weight" id="wt-month">--</div>
+    </div>
+    <div class="bazi-cell">
+      <div class="label">日柱</div>
+      <div class="pillar" id="bz-day">--</div>
+      <div class="weight" id="wt-day">--</div>
+    </div>
+    <div class="bazi-cell">
+      <div class="label">时柱</div>
+      <div class="pillar" id="bz-hour">--</div>
+      <div class="weight" id="wt-hour">--</div>
+    </div>
+  </div>
+
+  <div id="input-info" style="background:#1a1a2e;border-radius:8px;padding:10px 12px;font-size:12px;color:#a09080;line-height:1.8;margin-bottom:12px;"></div>
+
+  <div class="commentary">
+    <div class="commentary-title" id="cm-title">命理评语</div>
+    <div id="cm-text"></div>
+  </div>
+
+  <div class="btn-row" style="margin-top:14px">
+    <button class="btn btn-primary" onclick="saveCard()">保存结果</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 农历数据（1900-2100年，简化版：春节日期 + 是否闰月 + 月大小）
+// 数据格式：每个条目对应一年
+// monthData: 月份数组，正数=大月30天，负数=小月29天，0=该月不存在
+// leapMonth: 0=无闰月，其他=闰几月
+// firstDay: 正月初一对应的公历"第几天"（从该年1月1日起）
+// ============================================================
+
+const LUNAR_DATA = [
+  { y:1900,sm:1,m:1,d:21,lm:0,lmd:[0,30,29,30,29,30,29,30,29,30,29,30,29,0] },
+  { y:1901,sm:2,m:0,lmd:[0,29,30,29,30,29,30,29,30,29,30,29,30,29,0] },
+  { y:1902,sm:2,m:0,lmd:[0,29,30,30,29,30,29,30,29,30,29,30,29,30,0] },
+  { y:1903,sm:1,m:0,lmd:[0,30,29,30,29,30,29,30,29,30,29,30,29,30,0] },
+  { y:1904,sm:1,m:1,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,29,30,0] },
+  { y:1905,sm:2,m:0,lmd:[0,29,30,29,30,29,30,29,30,30,29,30,29,30,0] },
+  { y:1906,sm:2,m:0,lmd:[0,30,29,30,29,30,29,29,30,30,29,30,30,29,0] },
+  { y:1907,sm:3,m:0,lmd:[0,29,30,29,30,29,30,29,29,30,29,30,30,29,0] },
+  { y:1908,sm:2,m:1,lmd:[0,29,30,30,29,30,29,29,30,29,30,29,30,30,0] },
+  { y:1909,sm:1,m:0,lmd:[0,30,29,30,30,29,30,29,29,30,29,30,29,30,0] },
+  { y:1910,sm:2,m:0,lmd:[0,30,29,30,29,30,30,29,30,29,30,29,29,30,0] },
+  { y:1911,sm:1,m:0,lmd:[0,30,30,29,30,29,30,29,30,30,29,30,29,29,0] },
+  { y:1912,sm:2,m:1,lmd:[0,29,30,29,30,30,29,30,29,30,30,29,30,29,0] },
+  { y:1913,sm:2,m:0,lmd:[0,29,30,29,30,29,30,30,29,30,30,29,30,30,0] },
+  { y:1914,sm:1,m:0,lmd:[0,29,30,29,29,30,29,30,30,29,30,30,29,30,0] },
+  { y:1915,sm:3,m:0,lmd:[0,30,29,30,29,29,30,29,30,29,30,30,29,30,0] },
+  { y:1916,sm:2,m:1,lmd:[0,29,30,30,29,30,29,29,30,29,30,29,30,30,0] },
+  { y:1917,sm:2,m:0,lmd:[0,29,30,29,30,30,29,30,29,30,29,29,30,30,0] },
+  { y:1918,sm:1,m:0,lmd:[0,29,30,29,30,29,30,30,29,30,29,29,30,30,0] },
+  { y:1919,sm:2,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,29,30,0] },
+  { y:1920,sm:2,m:1,lmd:[0,30,29,30,30,29,30,29,30,30,29,30,29,29,0] },
+  { y:1921,sm:1,m:0,lmd:[0,30,29,30,30,29,30,29,30,30,29,30,29,29,0] },
+  { y:1922,sm:2,m:0,lmd:[0,30,29,30,29,30,30,29,30,29,30,30,29,30,0] },
+  { y:1923,sm:2,m:0,lmd:[0,29,30,29,30,29,30,29,30,30,29,30,30,29,0] },
+  { y:1924,sm:1,m:1,lmd:[0,30,29,30,29,30,29,30,29,30,30,29,30,30,0] },
+  { y:1925,sm:2,m:0,lmd:[0,29,30,29,30,30,29,30,29,29,30,30,29,30,0] },
+  { y:1926,sm:2,m:0,lmd:[0,30,29,30,29,30,30,29,30,29,29,30,29,30,0] },
+  { y:1927,sm:1,m:0,lmd:[0,30,30,29,30,29,30,29,30,29,30,29,30,29,0] },
+  { y:1928,sm:2,m:1,lmd:[0,29,30,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:1929,sm:2,m:0,lmd:[0,29,30,29,30,30,29,30,30,29,30,29,30,30,0] },
+  { y:1930,sm:1,m:0,lmd:[0,29,30,29,30,29,30,30,30,29,30,29,30,30,0] },
+  { y:1931,sm:3,m:0,lmd:[0,30,29,30,29,29,30,30,30,29,30,29,30,29,0] },
+  { y:1932,sm:2,m:1,lmd:[0,30,29,30,29,30,29,30,30,29,30,30,29,29,0] },
+  { y:1933,sm:1,m:0,lmd:[0,30,30,29,30,29,30,29,30,30,29,30,30,29,0] },
+  { y:1934,sm:2,m:0,lmd:[0,29,30,29,30,30,29,30,29,30,30,29,30,30,0] },
+  { y:1935,sm:1,m:0,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,30,30,0] },
+  { y:1936,sm:2,m:1,lmd:[0,30,29,29,30,29,30,30,29,30,29,30,30,30,0] },
+  { y:1937,sm:2,m:0,lmd:[0,29,30,29,29,30,29,30,30,29,30,29,30,30,0] },
+  { y:1938,sm:2,m:0,lmd:[0,30,29,30,29,29,30,29,30,30,29,30,29,30,0] },
+  { y:1939,sm:1,m:0,lmd:[0,30,30,29,30,29,30,29,30,29,30,30,29,29,0] },
+  { y:1940,sm:3,m:1,lmd:[0,30,29,30,30,29,30,29,30,29,30,30,29,29,0] },
+  { y:1941,sm:2,m:0,lmd:[0,30,29,30,30,29,30,29,30,30,29,30,29,29,0] },
+  { y:1942,sm:1,m:0,lmd:[0,30,29,30,29,30,30,29,30,30,29,30,29,30,0] },
+  { y:1943,sm:2,m:0,lmd:[0,29,30,29,30,29,30,30,29,30,30,29,30,29,0] },
+  { y:1944,sm:1,m:1,lmd:[0,30,29,30,29,30,29,30,30,29,30,30,29,30,0] },
+  { y:1945,sm:2,m:0,lmd:[0,29,30,29,30,30,29,29,30,30,29,30,30,29,0] },
+  { y:1946,sm:2,m:0,lmd:[0,29,30,29,30,29,30,29,30,30,29,30,30,30,0] },
+  { y:1947,sm:3,m:0,lmd:[0,29,29,30,30,29,30,29,29,30,30,29,30,30,0] },
+  { y:1948,sm:2,m:1,lmd:[0,30,29,29,30,30,29,30,29,29,30,30,29,30,0] },
+  { y:1949,sm:2,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,29,30,29,30,0] },
+  { y:1950,sm:1,m:0,lmd:[0,30,30,29,30,29,30,29,30,30,29,29,30,29,0] },
+  { y:1951,sm:3,m:0,lmd:[0,30,29,30,30,29,30,29,30,29,30,29,30,29,0] },
+  { y:1952,sm:2,m:1,lmd:[0,29,30,30,29,30,30,29,30,29,30,30,29,29,0] },
+  { y:1953,sm:2,m:0,lmd:[0,29,30,29,30,30,29,30,30,29,30,29,30,30,0] },
+  { y:1954,sm:1,m:0,lmd:[0,29,30,29,30,29,30,30,29,30,30,29,30,30,0] },
+  { y:1955,sm:2,m:0,lmd:[0,30,29,29,30,29,30,29,30,30,29,30,30,30,0] },
+  { y:1956,sm:3,m:1,lmd:[0,29,30,29,29,30,29,30,29,30,30,29,30,30,0] },
+  { y:1957,sm:2,m:0,lmd:[0,30,29,30,29,29,30,29,30,29,30,30,29,30,0] },
+  { y:1958,sm:1,m:0,lmd:[0,30,30,29,30,29,30,29,30,29,30,29,30,29,0] },
+  { y:1959,sm:2,m:0,lmd:[0,30,29,30,30,29,30,29,30,29,30,29,30,29,0] },
+  { y:1960,sm:2,m:1,lmd:[0,30,29,30,29,30,30,29,30,29,30,29,30,29,0] },
+  { y:1961,sm:3,m:0,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,30,29,0] },
+  { y:1962,sm:2,m:0,lmd:[0,29,30,29,30,29,30,30,29,30,30,29,30,30,0] },
+  { y:1963,sm:2,m:0,lmd:[0,29,30,29,30,29,30,29,30,30,30,29,30,29,0] },
+  { y:1964,sm:1,m:1,lmd:[0,30,29,30,29,30,29,30,29,30,30,29,30,30,0] },
+  { y:1965,sm:2,m:0,lmd:[0,29,30,29,30,30,29,29,30,29,30,30,29,30,0] },
+  { y:1966,sm:2,m:0,lmd:[0,30,29,30,29,30,29,30,29,30,29,30,29,30,0] },
+  { y:1967,sm:1,m:0,lmd:[0,30,29,30,30,29,30,29,30,29,30,29,30,29,0] },
+  { y:1968,sm:2,m:1,lmd:[0,29,30,29,30,30,29,30,29,30,30,29,30,29,0] },
+  { y:1969,sm:2,m:0,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,30,29,0] },
+  { y:1970,sm:3,m:0,lmd:[0,29,30,29,30,29,30,29,30,30,29,30,30,29,0] },
+  { y:1971,sm:2,m:0,lmd:[0,29,30,30,29,30,29,29,30,30,29,30,30,29,0] },
+  { y:1972,sm:1,m:1,lmd:[0,30,29,30,30,29,30,29,29,30,30,29,30,29,0] },
+  { y:1973,sm:2,m:0,lmd:[0,30,29,30,29,30,30,29,30,29,30,29,30,29,0] },
+  { y:1974,sm:2,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:1975,sm:3,m:1,lmd:[0,29,30,29,30,29,30,29,30,30,29,30,30,29,0] },
+  { y:1976,sm:2,m:0,lmd:[0,29,30,30,29,30,29,29,30,30,29,30,30,29,0] },
+  { y:1977,sm:2,m:0,lmd:[0,30,29,30,29,30,29,30,29,30,29,30,30,29,0] },
+  { y:1978,sm:1,m:0,lmd:[0,30,29,30,30,29,30,29,30,29,29,30,30,29,0] },
+  { y:1979,sm:3,m:0,lmd:[0,30,29,30,29,30,30,29,30,29,29,30,30,29,0] },
+  { y:1980,sm:2,m:1,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,30,29,0] },
+  { y:1981,sm:2,m:0,lmd:[0,29,30,29,30,30,29,29,30,30,29,30,29,30,0] },
+  { y:1982,sm:2,m:1,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,30,29,0] },
+  { y:1983,sm:1,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:1984,sm:2,m:1,lmd:[0,30,29,30,29,30,29,30,30,29,30,30,29,29,0] },
+  { y:1985,sm:2,m:0,lmd:[0,29,30,29,30,30,29,29,30,30,29,30,30,29,0] },
+  { y:1986,sm:1,m:1,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,30,29,0] },
+  { y:1987,sm:3,m:0,lmd:[0,30,29,29,30,30,29,29,30,30,29,30,29,30,0] },
+  { y:1988,sm:2,m:1,lmd:[0,30,29,30,29,30,30,29,29,30,30,29,30,29,0] },
+  { y:1989,sm:2,m:0,lmd:[0,30,29,30,29,30,29,30,29,30,30,29,30,29,0] },
+  { y:1990,sm:3,m:0,lmd:[0,29,30,30,29,30,29,30,29,30,29,30,30,29,0] },
+  { y:1991,sm:2,m:1,lmd:[0,29,30,29,30,30,29,30,29,30,29,30,29,30,0] },
+  { y:1992,sm:2,m:0,lmd:[0,29,30,29,30,30,29,30,30,29,30,29,29,30,0] },
+  { y:1993,sm:1,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:1994,sm:2,m:1,lmd:[0,30,30,29,30,29,30,29,30,29,30,30,29,29,0] },
+  { y:1995,sm:3,m:0,lmd:[0,29,30,30,29,30,29,30,29,30,30,29,30,29,0] },
+  { y:1996,sm:2,m:1,lmd:[0,29,30,29,30,30,29,30,29,30,29,30,30,29,0] },
+  { y:1997,sm:2,m:0,lmd:[0,30,29,30,29,30,30,29,30,29,29,30,30,29,0] },
+  { y:1998,sm:2,m:1,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,29,30,0] },
+  { y:1999,sm:1,m:0,lmd:[0,29,30,30,29,30,29,30,29,30,29,30,29,30,0] },
+  { y:2000,sm:3,m:1,lmd:[0,29,30,29,30,30,29,30,29,30,29,30,30,29,0] },
+  { y:2001,sm:2,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2002,sm:1,m:0,lmd:[0,30,30,29,30,29,30,29,30,30,29,30,29,29,0] },
+  { y:2003,sm:2,m:0,lmd:[0,30,29,30,29,30,30,29,30,29,30,30,29,29,0] },
+  { y:2004,sm:2,m:1,lmd:[0,30,29,30,29,30,30,29,30,29,30,30,29,29,0] },
+  { y:2005,sm:1,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,30,29,29,0] },
+  { y:2006,sm:3,m:1,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,30,29,0] },
+  { y:2007,sm:2,m:0,lmd:[0,29,30,30,29,30,29,30,29,30,29,30,30,29,0] },
+  { y:2008,sm:2,m:1,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,29,30,0] },
+  { y:2009,sm:1,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2010,sm:2,m:0,lmd:[0,30,29,30,30,29,30,29,30,29,30,29,30,29,0] },
+  { y:2011,sm:2,m:1,lmd:[0,30,29,30,29,30,30,29,30,29,30,29,30,29,0] },
+  { y:2012,sm:3,m:0,lmd:[0,29,30,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2013,sm:2,m:0,lmd:[0,29,30,29,30,30,29,29,30,30,29,30,30,29,0] },
+  { y:2014,sm:1,m:1,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,30,29,0] },
+  { y:2015,sm:2,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2016,sm:2,m:1,lmd:[0,30,29,30,29,30,29,30,30,29,30,30,29,29,0] },
+  { y:2017,sm:3,m:0,lmd:[0,29,30,29,30,30,29,29,30,30,29,30,29,30,0] },
+  { y:2018,sm:2,m:0,lmd:[0,29,30,29,30,30,29,30,29,30,29,30,30,29,0] },
+  { y:2019,sm:1,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2020,sm:2,m:1,lmd:[0,30,29,30,29,30,29,30,30,29,30,30,29,29,0] },
+  { y:2021,sm:2,m:0,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,30,29,0] },
+  { y:2022,sm:3,m:1,lmd:[0,29,30,29,30,29,30,29,30,30,29,30,30,29,0] },
+  { y:2023,sm:2,m:0,lmd:[0,30,29,30,29,30,29,30,29,30,30,29,30,29,0] },
+  { y:2024,sm:2,m:1,lmd:[0,29,30,30,29,30,29,30,29,30,30,29,30,29,0] },
+  { y:2025,sm:1,m:0,lmd:[0,29,30,29,30,30,29,29,30,30,29,30,30,29,0] },
+  { y:2026,sm:3,m:0,lmd:[0,29,30,29,30,29,30,29,30,30,29,30,30,29,0] },
+  { y:2027,sm:2,m:1,lmd:[0,29,30,30,29,30,29,29,30,30,29,30,29,30,0] },
+  { y:2028,sm:2,m:0,lmd:[0,30,29,30,29,30,30,29,29,30,30,29,30,29,0] },
+  { y:2029,sm:1,m:0,lmd:[0,30,29,30,30,29,30,29,30,29,30,30,29,29,0] },
+  { y:2030,sm:2,m:1,lmd:[0,29,30,29,30,30,29,30,29,30,29,30,30,29,0] },
+  { y:2031,sm:3,m:0,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,29,30,0] },
+  { y:2032,sm:2,m:1,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,29,30,0] },
+  { y:2033,sm:1,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2034,sm:2,m:1,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2035,sm:2,m:0,lmd:[0,30,29,30,29,30,30,29,30,29,30,29,30,29,0] },
+  { y:2036,sm:3,m:1,lmd:[0,29,30,29,30,30,29,29,30,30,29,30,29,30,0] },
+  { y:2037,sm:2,m:0,lmd:[0,30,29,30,29,30,29,30,29,30,30,29,30,29,0] },
+  { y:2038,sm:1,m:0,lmd:[0,30,30,29,30,29,30,29,30,29,30,29,30,29,0] },
+  { y:2039,sm:2,m:0,lmd:[0,30,29,30,30,29,30,29,30,29,30,29,30,29,0] },
+  { y:2040,sm:2,m:1,lmd:[0,30,29,30,29,30,30,29,30,29,30,29,30,29,0] },
+  { y:2041,sm:3,m:0,lmd:[0,29,30,29,30,30,29,30,29,30,30,29,30,29,0] },
+  { y:2042,sm:2,m:1,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,30,29,0] },
+  { y:2043,sm:1,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2044,sm:2,m:1,lmd:[0,30,29,30,29,30,29,30,30,29,30,30,29,29,0] },
+  { y:2045,sm:2,m:0,lmd:[0,30,29,30,30,29,30,29,30,29,30,30,29,29,0] },
+  { y:2046,sm:3,m:1,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,30,29,0] },
+  { y:2047,sm:2,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2048,sm:2,m:1,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2049,sm:1,m:0,lmd:[0,30,29,30,30,29,30,29,30,30,29,30,29,29,0] },
+  { y:2050,sm:3,m:0,lmd:[0,29,30,29,30,30,29,30,29,30,30,29,30,29,0] },
+  { y:2051,sm:2,m:1,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,30,29,0] },
+  { y:2052,sm:2,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2053,sm:1,m:0,lmd:[0,30,29,30,30,29,30,29,30,29,30,30,29,29,0] },
+  { y:2054,sm:2,m:1,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2055,sm:2,m:0,lmd:[0,30,29,30,30,29,30,29,30,29,30,30,29,29,0] },
+  { y:2056,sm:3,m:1,lmd:[0,29,30,29,30,29,30,30,29,30,30,29,30,29,0] },
+  { y:2057,sm:2,m:0,lmd:[0,29,30,29,30,30,29,29,30,30,29,30,30,29,0] },
+  { y:2058,sm:2,m:1,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,30,29,0] },
+  { y:2059,sm:1,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2060,sm:2,m:1,lmd:[0,30,29,30,29,30,29,30,30,29,30,30,29,29,0] },
+  { y:2061,sm:2,m:0,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,30,29,0] },
+  { y:2062,sm:3,m:0,lmd:[0,29,30,29,30,29,30,29,30,30,29,30,30,29,0] },
+  { y:2063,sm:2,m:1,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,29,30,0] },
+  { y:2064,sm:1,m:0,lmd:[0,30,29,30,30,29,30,29,30,29,30,29,30,29,0] },
+  { y:2065,sm:2,m:0,lmd:[0,30,30,29,30,29,30,29,30,29,30,29,30,29,0] },
+  { y:2066,sm:2,m:1,lmd:[0,30,29,30,29,30,30,29,30,29,30,29,30,29,0] },
+  { y:2067,sm:3,m:0,lmd:[0,29,30,29,30,30,29,29,30,30,29,30,30,29,0] },
+  { y:2068,sm:2,m:1,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,30,29,0] },
+  { y:2069,sm:1,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2070,sm:2,m:1,lmd:[0,30,29,30,29,30,29,30,30,29,30,30,29,29,0] },
+  { y:2071,sm:2,m:0,lmd:[0,30,29,30,29,30,30,29,30,29,30,30,29,29,0] },
+  { y:2072,sm:3,m:1,lmd:[0,29,30,29,30,29,30,30,29,30,30,29,30,29,0] },
+  { y:2073,sm:2,m:0,lmd:[0,29,30,29,30,30,29,29,30,30,29,30,30,29,0] },
+  { y:2074,sm:1,m:1,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,30,29,0] },
+  { y:2075,sm:2,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2076,sm:2,m:1,lmd:[0,30,29,30,29,30,29,30,30,29,30,30,29,29,0] },
+  { y:2077,sm:3,m:0,lmd:[0,29,30,29,30,30,29,29,30,30,29,30,30,29,0] },
+  { y:2078,sm:2,m:0,lmd:[0,29,30,29,30,30,29,30,29,30,29,30,30,29,0] },
+  { y:2079,sm:1,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2080,sm:2,m:1,lmd:[0,30,29,30,29,30,29,30,30,29,30,30,29,29,0] },
+  { y:2081,sm:2,m:0,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,30,29,0] },
+  { y:2082,sm:3,m:1,lmd:[0,29,30,29,30,29,30,29,30,30,29,30,30,29,0] },
+  { y:2083,sm:2,m:0,lmd:[0,29,30,29,30,30,29,29,30,30,29,30,29,30,0] },
+  { y:2084,sm:1,m:0,lmd:[0,30,29,30,29,30,30,29,29,30,30,29,30,29,0] },
+  { y:2085,sm:2,m:1,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2086,sm:2,m:0,lmd:[0,30,29,30,29,30,30,29,30,29,30,29,30,29,0] },
+  { y:2087,sm:3,m:0,lmd:[0,29,30,30,29,30,29,30,29,30,30,29,30,29,0] },
+  { y:2088,sm:2,m:1,lmd:[0,29,30,29,30,30,29,30,29,30,29,30,30,29,0] },
+  { y:2089,sm:1,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2090,sm:2,m:1,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2091,sm:2,m:0,lmd:[0,30,29,30,29,30,30,29,30,29,30,29,30,29,0] },
+  { y:2092,sm:3,m:1,lmd:[0,29,30,29,30,30,29,29,30,30,29,30,30,29,0] },
+  { y:2093,sm:2,m:0,lmd:[0,29,30,29,30,30,29,30,29,30,29,30,30,29,0] },
+  { y:2094,sm:2,m:0,lmd:[0,30,29,30,29,30,29,30,30,29,30,29,30,29,0] },
+  { y:2095,sm:1,m:1,lmd:[0,30,29,30,29,30,29,30,30,29,30,30,29,29,0] },
+  { y:2096,sm:2,m:0,lmd:[0,29,30,29,30,30,29,30,29,30,30,29,30,29,0] },
+  { y:2097,sm:2,m:1,lmd:[0,29,30,29,30,29,30,29,30,30,29,30,30,29,0] },
+  { y:2098,sm:3,m:0,lmd:[0,29,30,29,30,29,30,29,30,30,29,30,29,30,0] },
+  { y:2099,sm:2,m:0,lmd:[0,29,30,30,29,30,29,30,29,30,29,30,30,29,0] },
+  { y:2100,sm:2,m:0,lmd:[0,29,30,29,30,29,30,30,29,30,29,30,29,30,0] },
+];
+
+// 天干
+const TIANGAN = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+// 地支
+const DIZHI = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+// 时辰对应地支
+const SHICHEN_DIZHI = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+// 时辰名称
+const SHICHEN_NAME = ['子时','丑时','寅时','卯时','辰时','巳时','午时','未时','申时','酉时','戌时','亥时'];
+// 月份地支
+const MONTH_DIZHI = ['', '寅','卯','辰','巳','午','未','申','酉','戌','亥','子','丑'];
+
+// 称骨算命年份骨重（用户官方对照表，五钱=0.5，六钱=0.6，...一两=1.0）
+const YEAR_WEIGHT = {
+  // 子（鼠）
+  '甲子':1.2,'丙子':1.6,'戊子':1.5,'庚子':0.7,'壬子':0.5,
+  // 丑（牛）
+  '乙丑':0.9,'丁丑':0.8,'己丑':0.7,'辛丑':0.7,'癸丑':0.7,
+  // 寅（虎）
+  '丙寅':0.6,'戊寅':0.8,'庚寅':0.9,'壬寅':0.9,'甲寅':1.2,
+  // 卯（兔）
+  '丁卯':0.7,'己卯':1.9,'辛卯':1.2,'癸卯':1.2,'乙卯':0.8,
+  // 辰（龙）
+  '戊辰':1.2,'庚辰':1.2,'壬辰':1.0,'甲辰':0.8,'丙辰':0.8,
+  // 巳（蛇）
+  '己巳':0.5,'辛巳':0.6,'癸巳':0.7,'乙巳':0.7,'丁巳':0.6,
+  // 午（马）
+  '庚午':0.9,'壬午':0.8,'甲午':1.5,'丙午':1.9,'戊午':1.9,
+  // 未（羊）
+  '辛未':0.8,'癸未':0.7,'乙未':0.6,'丁未':0.5,'己未':0.6,
+  // 申（猴）
+  '壬申':0.7,'甲申':0.5,'丙申':0.5,'戊申':1.4,'庚申':0.8,
+  // 酉（鸡）
+  '癸酉':0.8,'乙酉':1.5,'丁酉':1.4,'己酉':0.5,'辛酉':1.6,
+  // 戌（狗）
+  '甲戌':1.5,'丙戌':0.6,'戊戌':1.4,'庚戌':0.9,'壬戌':1.0,
+  // 亥（猪）
+  '乙亥':0.9,'丁亥':1.6,'己亥':0.9,'辛亥':1.7,'癸亥':0.6,
+};
+
+// 月柱重量（按公历月份1-12）
+const SOLAR_MONTH_WEIGHT = {
+  1:0.6, 2:0.7, 3:1.8, 4:0.9, 5:0.5, 6:1.6,
+  7:0.9, 8:1.5, 9:1.8, 10:0.8, 11:0.9, 12:0.5,
+};
+
+// 日柱重量（按农历日初一到三十）
+const LUNAR_DAY_WEIGHT = {
+  1:0.5, 2:1.0, 3:0.8, 4:1.5, 5:1.6, 6:1.5, 7:0.8, 8:1.6, 9:0.8, 10:1.6,
+  11:0.9, 12:1.7, 13:0.8, 14:1.7, 15:1.0, 16:0.8, 17:0.9, 18:1.8, 19:0.5, 20:1.0,
+  21:1.0, 22:0.9, 23:0.8, 24:0.9, 25:1.5, 26:1.8, 27:0.7, 28:0.8, 29:1.6, 30:0.6,
+};
+
+// 时柱重量（按时辰子-亥）
+const HOUR_WEIGHT = {
+  '子':1.6,'丑':0.6,'寅':0.7,'卯':1.0,'辰':0.9,'巳':1.6,
+  '午':1.0,'未':0.8,'申':0.8,'酉':0.9,'戌':0.6,'亥':0.6,
+};
+
+// 评语（按骨重区间）
+const COMMENTS = {
+  '1两': '命薄如纸，凡事需靠自身努力，少年艰辛，中年后渐有起色。',
+  '1两1钱': '奔波劳碌之命，早年历经波折，中年后靠勤劳积累家业。',
+  '1两2钱': '先难后易，早年奔波，中年后财运渐开，宜守成不宜冒进。',
+  '1两3钱': '清贫之命，靠手艺或技艺谋生，晚年安康。',
+  '1两4钱': '平凡普通之命，无大起大落，安稳度日即是福。',
+  '1两5钱': '先贫后富，早年艰辛，中年后通过努力改变命运。',
+  '1两6钱': '福寿双全之命，勤劳致富，晚年儿孙满堂。',
+  '1两7钱': '衣食无忧，中年发达，晚年财运亨通。',
+  '1两8钱': '大富大贵之命，命中多贵人相助，财源广进。',
+  '1两9钱': '官运亨通之命，仕途顺遂，可得高位。',
+  '2两': '白手起家之命，靠智慧和勤劳打下一片天地。',
+  '2两1钱': '中富之命，财来有道，宜守不宜攻。',
+  '2两2钱': '先难后易，晚年福泽深厚，子孙发达。',
+  '2两3钱': '平常之命，顺其自然，不贪不妄自有福。',
+  '2两4钱': '聪明伶俐，早年得志，中年有所成就。',
+  '2两5钱': '福禄双全，一生少有大灾大难，平安是福。',
+  '2两6钱': '荣华富贵之命，命中注定锦衣玉食。',
+  '2两7钱': '女命带福，男命有权，晚年子孙显贵。',
+  '2两8钱': '大贵之命，位高权重，财运亨通。',
+  '2两9钱': '大吉之命，逢凶化吉，福寿绵长。',
+  '3两': '大富大贵，命中注定成就非凡事业。',
+  '3两1钱': '财官双美之命，名利双收，福寿兼备。',
+  '3两2钱': '大富甲一方之命，财运亨通，家业兴旺。',
+  '3两3钱': '大贵之命，科甲功名，仕途显达。',
+  '3两4钱': '女命此骨重，旺夫益子，贤良淑德。',
+  '3两5钱': '大富大贵之命，一生无匮乏之忧。',
+  '3两6钱': '将相之命，权柄在握，声名远扬。',
+  '3两7钱': '帝王之命，命中注定非富即贵，超凡出众。',
+  '3两8钱': '权重望崇之命，官运亨通，福寿双全。',
+  '3两9钱': '极贵之命，功成名就，流芳百世。',
+  '4两': '帝王国君之命，贵不可言，权倾一方。',
+  '4两以上': '圣贤豪杰之命，超越凡俗，非池中之物。',
+};
+
+// 女命专属歌诀（用户提供的官方版本）
+const FEMALE_COMMENTS = {
+  '2两1钱': '身生此命运不通，乌云盖月黑朦胧，莫向故园载花木，可来幽地种青松。',
+  '2两2钱': '女命孤冷独薄身，此身推来路乏人，操心烦恼难度日，一生痛苦度光阴。',
+  '2两3钱': '女命生来轻薄人，营谋作事难称心，六亲骨肉亦无靠，奔走劳碌困苦门。',
+  '2两4钱': '女命推来福禄无，沿家艰难辛苦多，丈夫儿女不亲爱，弃走他乡作游姑。',
+  '2两5钱': '此命一身八字低，家庭艰辛多苦妻，娘家亲友情义冷，一勤勤劳多忧眉。',
+  '2两6钱': '平生衣禄苦求谋，若女配夫带忧愁，咸酸苦辣他偿过，晚年衣食本无忧。',
+  '2两7钱': '此命推来做事难，难为夫君作主张，心闷口来口问心，晚景衣禄宜自享。',
+  '2两8钱': '女命生来八字轻，为善作事也无因，你把别人当亲生，别人对你假殷情。',
+  '2两9钱': '花费艳来硬性身，自奔自力不求人，若问求财方可在，定有甜度好光阴。',
+  '3两': '女命推来比郎强，婚姻大事难无阻，年丰度过坎时，末年诸般皆遂心。',
+  '3两1钱': '早年行运在忙端，劳碌奔波苦勤求，费劳苦心把家立，娶夫克名难无忧。',
+  '3两2钱': '时逢运来带吉神，从有凶星转灰生，真变假来假变真，结拜兄妹有亲情。',
+  '3两3钱': '初限命中有变化，中年可比树落花，勤俭持家难度日，晚年成家享荣华。',
+  '3两4钱': '命带孤单难搭枝，看破红尘最相宜，谋望求财空费力，婚姻三妻两次离。',
+  '3两5钱': '女子走水怕水深，出行交易受灾难，婚姻周郎休此意，官司口舌须相加。',
+  '3两6钱': '忧悉常锁两眉间，家业挂心不等闲，从今以后防口角，任意行移不相关。',
+  '3两7钱': '此命推来运多磨，若作推群受折磨，山翁崎岖下，左插右插安难留。',
+  '3两8钱': '凤鸣歧山四方扬，女命逢此大吉昌，走失夫君音信有，晚年衣禄财盈箱。',
+  '3两9钱': '女命推来运未能，劳碌奔波一场空，好俊似鸟在笼锁，中年末限凄秋风。',
+  '4两': '目前月令运不良，千辛万苦受熬煎，女身受得多苦难，晚年福禄比密甜。',
+  '4两1钱': '此命推来一般硬，女子为人很非凡，中年逍多自在，晚年更比中超然。',
+  '4两2钱': '枯井破底已多年，今有泉水出来鲜，寄生洋商人称美，中运来转喜安然。',
+  '4两3钱': '推车靠涯道路通，女名求婚也无空，婚姻出配无阻得，疾病口舌离身轻。',
+  '4两4钱': '夜梦金银醒来空，立志谋业运不通，婚姻难成交易败，夫君得失未见踪。',
+  '4两5钱': '女命终身驳杂多，六亲骨肉不相助，命中男女都难养，劳碌辛苦还奔波。',
+  '4两6钱': '孤舟行水离沙滩，离乡出外早过家，是非口舌皆无碍，婚姻合配紫微房。',
+  '4两7钱': '目前月令运不良，千辛万苦受熬煎，女身受得多苦难，晚年福禄比密甜。',
+  '4两8钱': '月令运好心纳闷，妇女要落疾病身，几番机关番复复，半世快活半世愁。',
+  '4两9钱': '女子命运胜有钱，繁华热闹好姻缘，夫君英俊有名气，儿女显贵进仕官。',
+  '5两': '马氏太公不相和，好命逢此忧凝多，多恩人无义反为仇，是非平地起风波。',
+  '5两1钱': '肥羊一群入出场，防虎逢之把口张，适口充饥心欢喜，女命八字大吉祥。',
+  '5两2钱': '顺风行舟扯起帆，上天又助一顺风，不用费力逍遥去，任意顺行大亨通。',
+  '5两3钱': '此命相貌眉目清，文武双全功名成，一生衣禄皆无缺，可算世上积福人。',
+  '5两4钱': '运开满腹好文章，谋事求财大吉祥，出行交易多得稳，到处亨通姓名扬。',
+  '5两5钱': '发政旅仁志量高，女命求财任他乡，交奇婚姻多有意，无君出外有音耗。',
+  '5两6钱': '明珠辉吐离埃来，女有口舌消散开，走失郎君当两归，交易有成永无灾。',
+  '5两7钱': '游鱼戏水被网惊，踊身变化入龙门，三根杨柳垂金线，万朵桃花显价身。',
+  '5两8钱': '此命推来转悠悠，发达还须遇好时，幸得今日重反点，自有好事在后头。',
+  '5两9钱': '雨雪载途泥泞，交易不安难出生，疾病还拉婚姻慢，谋望求财事难寻。',
+  '6两': '女命八字喜气和，谋事求财吉庆多，口舌渐消疾病少，大君走别归老窝。',
+  '6两1钱': '缘木求鱼事多难，虽不得鱼无害反，若是行险弄巧地，事不遂心枉安凡。',
+  '6两2钱': '指日高升气象新，走失待人有信音，好命遇事遂心得，何病口舌除根清。',
+  '6两3钱': '五官脱运难抬头，妇女须当把财求，交易少行有人助，一生衣禄不须愁。',
+  '6两4钱': '俊鸟曾得出笼中，脱离为难显威风，一朝得意福力至，东南西北任西东。',
+  '6两5钱': '女命推来福非轻，兹善力事受人敬，天降文王开基业，八百年来富贵门。',
+  '6两6钱': '时来运转阁阁楼，贾德淑女君子求，击鼓乐之大吉庆，女命逢此喜悠悠。',
+  '6两7钱': '乱丝无头定有头，碰得奈事暂折磨，交易出行无好处，谋事求财心不遂。',
+  '6两8钱': '水底明月不可捞，女命早限运未高，交易出行难获利，未运终得渐见好。',
+  '6两9钱': '太公封相非凡儿，女子求财稳如山，交易合伙多吉庆，疾病口角遇天降。',
+  '7两': '本命推断喜气新，恰遇郎君金遂心，坤身来交正当运，富贵衣禄乐生平。',
+  '7两1钱': '此命推来宏远，交不须再愁苦穷难，一身有衣得福，安享荣华胜班超。',
+};
+
+// 男命歌诀（官方）
+const MALE_COMMENTS = {
+  '2两1钱': '短命非业谓大空，平生灾难事重重，凶祸频临陷逆境，终世困苦事不成。',
+  '2两2钱': '身寒骨冷苦伶仃，此命推来行乞人，劳碌碌破无度日， 终年打拱过平生。',
+  '2两3钱': '此命推来骨肉轻，求谋作事事难成，妻儿兄弟难难， 别处他乡作散人。',
+  '2两4钱': '此命推来福禄无，门庭困苦总难荣，六亲骨肉皆无靠， 流浪他乡作老翁。',
+  '2两5钱': '此命推来祖业微，门庭誓度似希奇，六亲骨肉如冰炭， 一世勤劳自把持。',
+  '2两6钱': '平生衣禄苦中求，独自营谋事不休，离祖出门宜早计， 晚来衣禄自无休。',
+  '2两7钱': '一生作事少商最，难靠祖气作主张，独马单枪空做去， 早年晚岁总无长。',
+  '2两8钱': '一生行事似飘蓬，祖宗产业在梦中，若不过房改名姓， 也当移徒二三通。',
+  '2两9钱': '初年运限未曾亨，纵有功名在后成，须过四旬才可立， 移居改姓始为良。',
+  '3两': '劳劳碌碌苦中求，何日云开见日头，难得祖基家可立， 中年衣禄渐无忧。',
+  '3两1钱': '忙忙碌碌苦中求，何日云开见日头，难得祖基家可立， 中年衣禄渐无忧。',
+  '3两2钱': '初年运暮事难难，须知福禄胜年光，半世自知流去也， 后来运转始吉昌。',
+  '3两3钱': '早岁做事事难成，百计徒劳枉费心，半世自知流去也， 后来运转始得金。',
+  '3两4钱': '此命福气果如和，僧道门中衣禄多，离祖出家方为妙， 朝晚拜佛念弥陀。',
+  '3两5钱': '生平福量不周全，祖业根基觉少传，营事生涯宜守守， 时来衣食胜从前。',
+  '3两6钱': '不须劳碌过平生，独自成家福不轻，早有福星常照命， 任君行去百般成。',
+  '3两7钱': '此命般般事不成，弟兄少力自孤行，虽然祖业须微有， 来得明时去不明。',
+  '3两8钱': '一身骨肉最清高，早入黉门姓氏标，待到年将三十六， 蓝衫脱去换红袍。',
+  '3两9钱': '此命终身运不通，劳劳作事尽皆空，苦心竭力成家计， 到得将来在梦中。',
+  '4两': '平生衣禄在绵长，件件心中自主张，前面风霜多受过， 后来必定享安康。',
+  '4两1钱': '此命推来不不同，为人能干异凡庸，中年还有逍遥福， 不比前时运未通。',
+  '4两2钱': '得宽怀处且宽怀，何用双眉皱不开，若使中年命运济， 那时名利一起来。',
+  '4两3钱': '为人心性最聪明，作事轩昂近贵人，衣禄一生天注定， 不须劳碌是丰亨。',
+  '4两4钱': '万事由天莫苦求，须知福禄赖人修，当年财帛难如意， 晚景欣然便无忧。',
+  '4两5钱': '名利推来竟若何，前番辛苦后奔波，命难难养男和女， 骨肉扶持也不多。',
+  '4两6钱': '东西南北尽皆通，出姓移居更觉隆，衣禄无穷无足数， 中年晚景一般同。',
+  '4两7钱': '此命推来旺末年，妻荣子贵自怡然,平生原享滔滔福， 可比源泉水水泉。',
+  '4两8钱': '初年运道未曾通，几许蹉跎命亦穷，兄弟六亲无依靠， 一生事业晚来整。',
+  '4两9钱': '此命推来福不轻，自成自立显门庭，从来富贵人钦敬， 使婢差奴过一生。',
+  '5两': '为利为名终日劳，中年福禄也多遭，老来自有财星照， 不比前番目下高。',
+  '5两1钱': '一世荣华事事通，不须劳碌自亨通，兄弟叔侄皆如意， 家业成时福禄宏。',
+  '5两2钱': '一世亨通事事能，不须劳苦自天京，宗族有光喜甚， 家声复盈称其心。',
+  '5两3钱': '此格推来福泽宏，兴家立业在其中，一生衣食安相定， 却胜凡人一福翁。',
+  '5两4钱': '此格详评福泽宏，诗书满腹看功成,丰衣足食多安, 正是人间有福人。',
+  '5两5钱': '策马扬鞭争名利，少年作事费劳心，一朝福禄源源至， 富贵荣华显六亲。',
+  '5两6钱': '此格推来礼义通，一身福禄用无穷，甜酸苦辣皆尝过， 滚滚财源盈而丰。',
+  '5两7钱': '福禄丰盈万事全，一身荣耀乐天年，名扬成震人争美， 此世逍遥作似仙。',
+  '5两8钱': '平生衣食自然来，名利双全富贵，金榜题名登甲第， 紫袍玉带走金阶。',
+  '5两9钱': '细推此格秀而清，必定为高学业成，甲第之中应有分， 扬鞭走马显威名。',
+  '6两': '一朝金榜题名显，显祖宗荣立大器成，衣禄定然无欠缺， 田园财阜更丰盈。',
+  '6两1钱': '不作朝中金榜客，定为世上大财翁，聪明天付经书熟， 名显高祖是所业。',
+  '6两2钱': '此命生来福不穷，读书必定显亲荣，紫衣玉带为相肺， 富贵荣华熟与同。',
+  '6两3钱': '命主为官福禄长，得来富贵实非常,名题雁塔传金榜， 大显门庭天下扬。',
+  '6两4钱': '此格威权不可当，紫袍金带坐高堂，荣华富贵谁能及， 万古留名姓长扬。',
+  '6两5钱': '细推此命福非轻，富贵荣华熟与争，定国安邦人极品， 威声显赫霉衰凛。',
+  '6两6钱': '此格人间一福人，堆金积玉满堂春,从来富贵有天定， 金榜题名更显荣。',
+  '6两7钱': '此命生来福自高，田园家业最高隆，平生衣禄丰盈足， 一路荣华万事通。',
+  '6两8钱': '富贵由天莫苦求，万事家计下须谋，今年不比前番事， 祖业根深千古留。',
+  '6两9钱': '君是人间福禄星，一生富贵众人钦,总然衣禄由天定， 安享荣华过一生。',
+  '7两': '此命推来福不轻，何须愁苦劳身心,荣华富贵已天定， 正直垂详拜紫庭。',
+  '7两1钱': '此命生来大不同，公侯卿相在其中，一生自有逍遥福， 富贵荣华极品隆。',
+  '7两二': '此命推来天下隆，必定人间一主公，富贵荣华数不尽， 定为乾坤一蛟龙。',
+};
+
+// 根据干支查年柱干支（1900年起）
+function getYearGanZhi(lunarYear) {
+  const baseYear = 1900;
+  const baseGZ = 0; // 1900=甲子 -> index 0
+  const offset = lunarYear - baseYear;
+  if (offset < 0) return '甲子';
+  const idx = offset % 60;
+  const tiangan = TIANGAN[idx % 10];
+  const dizhi = DIZHI[idx % 12];
+  return tiangan + dizhi;
+}
+
+// 查指定年数据的闰月（0=无闰月）
+function getLeapMonth(year) {
+  const d = LUNAR_DATA.find(x => x.y === year);
+  return d ? d.m : 0;
+}
+
+// 查指定年农历月份天数
+function getLunarMonthDays(year, month) {
+  const d = LUNAR_DATA.find(x => x.y === year);
+  if (!d) return 29;
+  const m = d.m;
+  const lmd = d.lmd;
+  // 月份索引：1-12，正月index=1，闰月index>12
+  if (m > 0 && month > m) {
+    // 过了闰月，月份要-1
+    return Math.abs(lmd[month - 1]) || 29;
+  }
+  return Math.abs(lmd[month]) || 29;
+}
+
+// 公历日期 -> 农历日期
+function solarToLunar(solarDate) {
+  const year = solarDate.getFullYear();
+  // 查找可能属于的农历年（本年或上一年）
+  for (const tryYear of [year, year - 1]) {
+    const d = LUNAR_DATA.find(x => x.y === tryYear);
+    if (!d) continue;
+    const newYear = new Date(d.y, d.sm - 1, d.m);
+    // 该年结束边界
+    const nextD = LUNAR_DATA.find(x => x.y === tryYear + 1);
+    const end = nextD ? new Date(nextD.y, nextD.sm - 1, nextD.m) : new Date(d.y + 1, d.sm - 1, d.m + 400);
+    if (solarDate >= newYear && solarDate < end) {
+      const days = Math.floor((solarDate - newYear) / 86400000);
+      return findLunarByDays(d, days);
+    }
+  }
+  return null;
+}
+
+function findLunarByDays(d, daysFromNewYear) {
+  let remaining = daysFromNewYear;
+  const lm = d.m;
+  const lmd = d.lmd;
+  for (let i = 1; i <= 12; i++) {
+    const monthDays = Math.abs(lmd[i] || 0);
+    if (monthDays === 0) break;
+    if (remaining < monthDays) {
+      return { year: d.y, month: i, day: remaining + 1, isLeapMonth: false };
+    }
+    remaining -= monthDays;
+    // 闰月处理：闰月跟随在某月之后
+    if (lm > 0 && i === lm) {
+      const leapDays = Math.abs(lmd[lm + 12] || 0);
+      if (leapDays > 0) {
+        if (remaining < leapDays) {
+          return { year: d.y, month: i, day: remaining + 1, isLeapMonth: true };
+        }
+        remaining -= leapDays;
+      }
+    }
+  }
+  return null;
+}
+
+// 农历日期 -> 公历日期
+function lunarToSolar(lYear, lMonth, lDay, isLeapMonth) {
+  const d = LUNAR_DATA.find(x => x.y === lYear);
+  if (!d) return null;
+
+  const startMonth = d.sm; // 正月公历月份
+  const startDay = d.m;    // 正月初一公历"日"
+
+  // 计算从正月初一到 lMonth/lDay 的天数
+  let days = 0;
+  for (let m = 1; m < lMonth; m++) {
+    days += getLunarMonthDays(lYear, m);
+  }
+  days += lDay - 1;
+
+  // 加上闰月（如果闰月在当月之前）
+  if (d.m > 0 && lMonth > d.m) {
+    days += getLunarMonthDays(lYear, d.m + 12); // 闰月总天数
+  }
+
+  // 加上闰月的偏移
+  if (isLeapMonth && d.m === lMonth) {
+    days += getLunarMonthDays(lYear, lMonth);
+  }
+
+  // 基准日：公历 d.y 年 d.sm 月 d.mm 日（正月初一）
+  const base = new Date(d.y, d.sm - 1, d.m);
+  base.setDate(base.getDate() + days);
+  return base;
+}
+
+// 初始化下拉选项
+function initSelects() {
+  const now = new Date();
+  const cyear = now.getFullYear();
+
+  // 年份
+  const ly = document.getElementById('lyear');
+  const sy = document.getElementById('syear');
+  for (let y = 1900; y <= 2100; y++) {
+    const opt1 = document.createElement('option');
+    opt1.value = y;
+    opt1.text = y + '年';
+    ly.appendChild(opt1);
+  }
+  sy.value = 1990;
+
+  // 月份
+  const lm = document.getElementById('lmonth');
+  const lunarMonths = ['正月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','腊月'];
+  for (let i = 0; i < 12; i++) {
+    const opt = document.createElement('option');
+    opt.value = i + 1;
+    opt.text = lunarMonths[i];
+    lm.appendChild(opt);
+  }
+
+  // 日期（动态，根据月份）
+  rebuildDays(1990, 1);
+
+  // 时辰
+  const lh = document.getElementById('lhour');
+  const sh = document.getElementById('shour');
+  for (let i = 0; i < 12; i++) {
+    const opt1 = document.createElement('option');
+    opt1.value = i;
+    opt1.text = SHICHEN_NAME[i] + ' (23:00-01:00等)';
+    lh.appendChild(opt1);
+
+    const opt2 = document.createElement('option');
+    opt2.value = i;
+    opt2.text = SHICHEN_NAME[i];
+    sh.appendChild(opt2);
+  }
+
+  // 默认值
+  ly.value = 1990;
+  lm.value = 1;
+  lh.value = 0;
+  sh.value = 0;
+
+  // 绑定月份变化事件（重算日期）
+  lm.addEventListener('change', () => {
+    rebuildDays(parseInt(ly.value), parseInt(lm.value));
+  });
+  ly.addEventListener('change', () => {
+    rebuildDays(parseInt(ly.value), parseInt(lm.value));
+  });
+}
+
+function rebuildDays(year, month) {
+  const ld = document.getElementById('lday');
+  ld.innerHTML = '';
+  const days = getLunarMonthDays(year, month);
+  for (let d = 1; d <= days; d++) {
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.text = d + '日';
+    ld.appendChild(opt);
+  }
+}
+
+let inputMode = 'lunar';
+
+function setMode(mode) {
+  inputMode = mode;
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('sec-lunar').classList.toggle('active', mode === 'lunar');
+  document.getElementById('sec-solar').classList.toggle('active', mode === 'solar');
+}
+
+let inputGender = 'female';
+function setGender(g) {
+  inputGender = g;
+  document.getElementById('btn-female').classList.toggle('active', g === 'female');
+  document.getElementById('btn-male').classList.toggle('active', g === 'male');
+}
+
+// 计算八字
+function getBazi(solarDate, hour) {
+  // 简单八字排法（简化版，精确需专业历法库）
+  const y = solarDate.getFullYear();
+  const m = solarDate.getMonth() + 1;
+  const d = solarDate.getDate();
+
+  // 年柱
+  const yearGZ = getYearGanZhi(y);
+
+  // 月柱：需算月令地支
+  const monthBase = (y % 100) * 0.12 + m;
+  const monthIdx = Math.floor((monthBase + monthBase / 3) % 12);
+  const monthGZ = TIANGAN[(TIANGAN.indexOf(yearGZ[0]) + 2) % 10] + DIZHI[monthIdx];
+
+  // 日柱：简化公式（公历儒略日近似）
+  const jd = Math.floor((y - 1) * 365.25 + m * 30.4375 + d + 8);
+  const dayIdx = jd % 60;
+  const dayGZ = TIANGAN[dayIdx % 10] + DIZHI[dayIdx % 12];
+
+  // 时柱
+  const hourIdx = Math.floor((hour + 1) / 2) % 12;
+  const hourGZ = TIANGAN[(dayIdx % 10 + Math.floor(hourIdx / 2)) % 10] + DIZHI[hourIdx];
+
+  return {
+    year: yearGZ,
+    month: monthGZ,
+    day: dayGZ,
+    hour: hourGZ,
+    hourName: SHICHEN_NAME[hourIdx],
+  };
+}
+
+// 计算骨重
+function calcBoneWeight(bazi, solarMonth, lunarDay) {
+  const yw = YEAR_WEIGHT[bazi.year] || 1.0;
+  const mw = SOLAR_MONTH_WEIGHT[solarMonth] || 1.0;
+  const dw = LUNAR_DAY_WEIGHT[lunarDay] || 1.0;
+  const hw = HOUR_WEIGHT[bazi.hour[1]] || 1.0;
+  return { yw, mw, dw, hw, total: yw + mw + dw + hw };
+}
+
+// 格式化为"X两X钱"
+function formatWeight(w) {
+  const liang = Math.floor(w);
+  const qian = Math.round((w - liang) * 10);
+  return `${liang}两${qian}钱`;
+}
+
+// 获取评语
+function getComment(w) {
+  const liang = Math.floor(w);
+  const qian = Math.round((w - liang) * 10);
+  const key = `${liang}两${qian}钱`;
+  // 女命优先用 FEMALE_COMMENTS（官方歌诀）
+  if (inputGender === 'female') {
+    if (FEMALE_COMMENTS[key]) return '【女命歌诀】' + FEMALE_COMMENTS[key];
+    // 女命未录入该骨重时退回通用评语
+  }
+  // 男命优先用 MALE_COMMENTS（官方歌诀）
+  if (MALE_COMMENTS[key]) return '【男命歌诀】' + MALE_COMMENTS[key];
+  // 男命或女命未命中时用通用评语
+  if (COMMENTS[key]) return COMMENTS[key];
+  if (liang === 4) return COMMENTS['4两以上'];
+  if (liang >= 3) return COMMENTS['3两9钱'];
+  if (liang === 2) return COMMENTS['2两9钱'];
+  if (liang === 1 && qian >= 8) return COMMENTS['1两9钱'];
+  if (liang === 1) return COMMENTS['1两' + qian + '钱'] || COMMENTS['1两'];
+  return COMMENTS['1两'];
+}
+
+function calculate() {
+  let birthDate, hour, solarMonth, lunarDay, info = {};
+
+  if (inputMode === 'lunar') {
+    const year = parseInt(document.getElementById('lyear').value);
+    const month = parseInt(document.getElementById('lmonth').value);
+    const day = parseInt(document.getElementById('lday').value);
+    hour = parseInt(document.getElementById('lhour').value);
+
+    // 农历输入：日直接用，月份需转公历
+    birthDate = lunarToSolar(year, month, day, false);
+    if (!birthDate) {
+      alert('日期超出范围，请尝试其他日期');
+      return;
+    }
+    solarMonth = birthDate.getMonth() + 1;
+    lunarDay = day;
+    info.inputLunar = `${year}年${month}月${day}日`;
+    info.inputSolar = `${birthDate.getFullYear()}-${String(solarMonth).padStart(2,'0')}-${String(birthDate.getDate()).padStart(2,'0')}`;
+  } else {
+    const year = parseInt(document.getElementById('syear').value);
+    const month = parseInt(document.getElementById('smonth').value);
+    const day = parseInt(document.getElementById('sday').value);
+    hour = parseInt(document.getElementById('shour').value);
+    birthDate = new Date(year, month - 1, day);
+    solarMonth = month;
+    // 转农历取日
+    const lunar = solarToLunar(birthDate);
+    lunarDay = lunar ? lunar.day : day;
+    info.inputSolar = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    if (lunar) {
+      info.inputLunar = `${lunar.year}年${lunar.month}月${lunar.day}日${lunar.isLeapMonth ? '(闰)' : ''}`;
+    } else {
+      info.inputLunar = '查询失败';
+    }
+  }
+
+  // 获取八字
+  const bazi = getBazi(birthDate, hour);
+  const weight = calcBoneWeight(bazi, solarMonth, lunarDay);
+
+  // 更新UI
+  document.getElementById('bone-weight').textContent = formatWeight(weight.total);
+  document.getElementById('bone-level').textContent = '年:' + weight.yw + ' + 月:' + weight.mw + ' + 日:' + weight.dw + ' + 时:' + weight.hw;
+  weight_total_cached = weight.total;
+
+  document.getElementById('bz-year').textContent = bazi.year;
+  document.getElementById('bz-month').textContent = bazi.month;
+  document.getElementById('bz-day').textContent = bazi.day;
+  document.getElementById('bz-hour').textContent = bazi.hour;
+
+  document.getElementById('wt-year').textContent = weight.yw + '两';
+  document.getElementById('wt-month').textContent = weight.mw + '两';
+  document.getElementById('wt-day').textContent = weight.dw + '两';
+  document.getElementById('wt-hour').textContent = weight.hw + '两';
+
+  document.getElementById('cm-title').textContent = formatWeight(weight.total) + ' · ' + (inputGender === 'female' ? '女命' : '男命') + '评语';
+  document.getElementById('cm-text').textContent = getComment(weight.total);
+
+  // 显示输入信息
+  const hint = document.getElementById('input-info');
+  if (hint) {
+    hint.innerHTML = `公历：${info.inputSolar}<br>农历：${info.inputLunar}<br>时辰：${bazi.hourName}`;
+  }
+
+  document.getElementById('result-card').style.display = 'block';
+  document.getElementById('result-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function reset() {
+  document.getElementById('result-card').style.display = 'none';
+}
+
+function saveCard() {
+  const card = document.getElementById('result-card');
+  const btn = event.target;
+  btn.textContent = '生成中...';
+  btn.disabled = true;
+
+  html2canvas(card, {
+    backgroundColor: '#2a2440',
+    scale: 2,
+    logging: false,
+    useCORS: true,
+  }).then(canvas => {
+    canvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `称骨算命_${formatWeight(weight_total_cached || 0).replace('两','两')}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+      btn.textContent = '已保存';
+      setTimeout(() => { btn.textContent = '保存为图片'; btn.disabled = false; }, 1500);
+    });
+  }).catch(err => {
+    alert('截图失败：' + err.message + '\n请手动截图或使用右键保存。');
+    btn.textContent = '保存为图片';
+    btn.disabled = false;
+  });
+}
+
+let weight_total_cached = 0;
+
+// 初始化
+initSelects();
+</script>
+</body>
+</html>
