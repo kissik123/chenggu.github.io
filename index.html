@@ -113,6 +113,18 @@
   }
   .btn-secondary:hover { background: #4d4466; }
 
+  .btn:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(212,160,74,0.3); }
+  .btn:active { transform: translateY(0); }
+
+  /* 结果卡片动画 */
+  .result-card-animated {
+    animation: fadeSlideUp 0.6s ease-out;
+  }
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
   .result {
     display: none;
     margin-top: 16px;
@@ -339,8 +351,10 @@
     <div id="cm-text"></div>
   </div>
 
-  <div class="btn-row" style="margin-top:14px">
+  <div class="btn-row" style="margin-top:14px; flex-wrap: wrap; gap: 8px;">
     <button class="btn btn-primary" onclick="saveCard()">保存结果</button>
+    <button class="btn btn-secondary" id="btn-copy" onclick="copyResult()">复制结果</button>
+    <button class="btn btn-secondary" onclick="shareLink()">分享链接</button>
   </div>
 </div>
 
@@ -1093,8 +1107,16 @@ function calculate() {
     hint.innerHTML = `公历：${info.inputSolar}<br>农历：${info.inputLunar}<br>时辰：${bazi.hourName}`;
   }
 
-  document.getElementById('result-card').style.display = 'block';
-  document.getElementById('result-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  // 显示结果卡片（带动画）
+  const card = document.getElementById('result-card');
+  card.classList.remove('result-card-animated');
+  void card.offsetWidth;  // 强制重排，让动画重新触发
+  card.style.display = 'block';
+  card.classList.add('result-card-animated');
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // 更新 URL 参数（方便分享）
+  setUrlParams();
 }
 
 function reset() {
@@ -1132,8 +1154,109 @@ function saveCard() {
 
 let weight_total_cached = 0;
 
+// 初始化下拉选项
+function initSelects() {
+  ... (existing code) ...
+}
+
+// ============ URL 参数分享功能 ============
+function getUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    mode: params.get('m'),   // l=lunar, s=solar
+    gender: params.get('g'), // f=female, m=male
+    year: params.get('y'),
+    month: params.get('mo'),
+    day: params.get('d'),
+    hour: params.get('h'),
+  };
+}
+
+function setUrlParams() {
+  const params = new URLSearchParams();
+  params.set('m', inputMode === 'lunar' ? 'l' : 's');
+  params.set('g', inputGender === 'female' ? 'f' : 'm');
+  if (inputMode === 'lunar') {
+    params.set('y', document.getElementById('lyear').value);
+    params.set('mo', document.getElementById('lmonth').value);
+    params.set('d', document.getElementById('lday').value);
+    params.set('h', document.getElementById('lhour').value);
+  } else {
+    params.set('y', document.getElementById('syear').value);
+    params.set('mo', document.getElementById('smonth').value);
+    params.set('d', document.getElementById('sday').value);
+    params.set('h', document.getElementById('shour').value);
+  }
+  const newUrl = window.location.pathname + '?' + params.toString();
+  window.history.replaceState(null, '', newUrl);
+}
+
+function loadFromUrlParams() {
+  const p = getUrlParams();
+  if (!p.year) return false;
+  try {
+    if (p.mode === 's') setMode('solar');
+    else setMode('lunar');
+    if (p.gender === 'm') setGender('male');
+    else setGender('female');
+    if (inputMode === 'lunar') {
+      document.getElementById('lyear').value = p.year;
+      document.getElementById('lmonth').value = p.month;
+      rebuildDays(parseInt(p.year), parseInt(p.month));
+      document.getElementById('lday').value = p.day;
+      document.getElementById('lhour').value = p.hour;
+    } else {
+      document.getElementById('syear').value = p.year;
+      document.getElementById('smonth').value = p.month;
+      document.getElementById('sday').value = p.day;
+      document.getElementById('shour').value = p.hour;
+    }
+    return true;
+  } catch(e) { return false; }
+}
+
+// 复制结果到剪贴簿
+function copyResult() {
+  const weight = formatWeight(weight_total_cached);
+  const bz = document.getElementById('cm-title').textContent;
+  const comment = document.getElementById('cm-text').textContent;
+  const info = document.getElementById('input-info').innerText;
+  const text = `【称骨算命结果】
+${info}
+
+骨重：${weight}
+${bz}
+
+${comment}
+
+在线测算：${window.location.href}`;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('btn-copy');
+    if (btn) { btn.textContent = '已复制'; setTimeout(() => btn.textContent = '复制结果', 1500); }
+  }).catch(() => {
+    alert('复制失败，请手动复制。');
+  });
+}
+
+// 分享链接
+function shareLink() {
+  setUrlParams();
+  const url = window.location.href;
+  navigator.clipboard.writeText(url).then(() => {
+    alert('链接已复制到剪贴簿，可粘贴分享！');
+  }).catch(() => {
+    prompt('复制此链接分享给他人：', url);
+  });
+}
+
 // 初始化
 initSelects();
+if (!loadFromUrlParams()) {
+  // 无 URL 参数，使用默认值
+} else {
+  // URL 有参数，自动测算
+  setTimeout(() => calculate(), 300);
+}
 </script>
 </body>
 </html>
