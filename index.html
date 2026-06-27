@@ -596,8 +596,8 @@ const YEAR_WEIGHT = {
   '乙亥':0.9,'丁亥':1.6,'己亥':0.9,'辛亥':1.7,'癸亥':0.6,
 };
 
-// 月柱重量（按公历月份1-12）
-const SOLAR_MONTH_WEIGHT = {
+// 月柱重量（按农历月份1-12，称骨算命传统表）
+const LUNAR_MONTH_WEIGHT = {
   1:0.6, 2:0.7, 3:1.8, 4:0.9, 5:0.5, 6:1.6,
   7:0.9, 8:1.5, 9:1.8, 10:0.8, 11:0.9, 12:0.5,
 };
@@ -704,6 +704,7 @@ const FEMALE_COMMENTS = {
   '6两9钱': '太公封相非凡儿，女子求财稳如山，交易合伙多吉庆，疾病口角遇天降。',
   '7两': '本命推断喜气新，恰遇郎君金遂心，坤身来交正当运，富贵衣禄乐生平。',
   '7两1钱': '此命推来宏远，交不须再愁苦穷难，一身有衣得福，安享荣华胜班超。',
+  '7两二': '此命推来天下隆，必定人间一女主，富贵荣华数不尽，定为乾坤一蛟龙。',
 };
 
 // 男命歌诀（官方）
@@ -765,10 +766,10 @@ const MALE_COMMENTS = {
 // 根据干支查年柱干支（1900年起）
 function getYearGanZhi(lunarYear) {
   const baseYear = 1900;
-  const baseGZ = 0; // 1900=甲子 -> index 0
+  const baseGZ = 36; // 1900=庚子 (天干庚=6, 地支子=0) -> index 36
   const offset = lunarYear - baseYear;
-  if (offset < 0) return '甲子';
-  const idx = offset % 60;
+  if (offset < 0) return '庚子';
+  const idx = (baseGZ + offset) % 60;
   const tiangan = TIANGAN[idx % 10];
   const dizhi = DIZHI[idx % 12];
   return tiangan + dizhi;
@@ -991,9 +992,9 @@ function getBazi(solarDate, hour) {
 }
 
 // 计算骨重
-function calcBoneWeight(bazi, solarMonth, lunarDay) {
+function calcBoneWeight(bazi, lunarMonth, lunarDay) {
   const yw = YEAR_WEIGHT[bazi.year] || 1.0;
-  const mw = SOLAR_MONTH_WEIGHT[solarMonth] || 1.0;
+  const mw = LUNAR_MONTH_WEIGHT[lunarMonth] || 1.0;
   const dw = LUNAR_DAY_WEIGHT[lunarDay] || 1.0;
   const hw = HOUR_WEIGHT[bazi.hour[1]] || 1.0;
   return { yw, mw, dw, hw, total: yw + mw + dw + hw };
@@ -1029,7 +1030,7 @@ function getComment(w) {
 }
 
 function calculate() {
-  let birthDate, hour, solarMonth, lunarDay, info = {};
+  let birthDate, hour, solarMonth, lunarMonth, lunarDay, info = {};
 
   if (inputMode === 'lunar') {
     const year = parseInt(document.getElementById('lyear').value);
@@ -1037,13 +1038,13 @@ function calculate() {
     const day = parseInt(document.getElementById('lday').value);
     hour = parseInt(document.getElementById('lhour').value);
 
-    // 农历输入：日直接用，月份需转公历
     birthDate = lunarToSolar(year, month, day, false);
     if (!birthDate) {
       alert('日期超出范围，请尝试其他日期');
       return;
     }
     solarMonth = birthDate.getMonth() + 1;
+    lunarMonth = month;  // 农历输入，月份就是农历月份
     lunarDay = day;
     info.inputLunar = `${year}年${month}月${day}日`;
     info.inputSolar = `${birthDate.getFullYear()}-${String(solarMonth).padStart(2,'0')}-${String(birthDate.getDate()).padStart(2,'0')}`;
@@ -1054,8 +1055,8 @@ function calculate() {
     hour = parseInt(document.getElementById('shour').value);
     birthDate = new Date(year, month - 1, day);
     solarMonth = month;
-    // 转农历取日
     const lunar = solarToLunar(birthDate);
+    lunarMonth = lunar ? lunar.month : 1;  // 公历输入，从转换结果取农历月份
     lunarDay = lunar ? lunar.day : day;
     info.inputSolar = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     if (lunar) {
@@ -1065,9 +1066,8 @@ function calculate() {
     }
   }
 
-  // 获取八字
   const bazi = getBazi(birthDate, hour);
-  const weight = calcBoneWeight(bazi, solarMonth, lunarDay);
+  const weight = calcBoneWeight(bazi, lunarMonth, lunarDay);
 
   // 更新UI
   document.getElementById('bone-weight').textContent = formatWeight(weight.total);
