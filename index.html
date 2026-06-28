@@ -1519,7 +1519,7 @@ function updateCurrentChen() {
   return chen;
 }
 
-function startGua() {
+function startGua() { console.log("startGua called, rolling=", rolling);
   if (rolling) return;
   const question = document.getElementById('gua-question').value.trim();
   if (!question) { alert('请先输入您想问的事情'); return; }
@@ -1541,7 +1541,7 @@ function startGua() {
   }, 60);
 }
 
-function stopGua() {
+function stopGua() { console.log("stopGua called");
   if (!rolling) return;
   rolling = false;
   if (rollingInterval) { clearInterval(rollingInterval); rollingInterval = null; }
@@ -1553,7 +1553,7 @@ function stopGua() {
   calculateHexagram(slotValues[0], slotValues[1], slotValues[2], chen.num);
 }
 
-function calculateHexagram(num1, num2, num3, chenNum) {
+function calculateHexagram(num1, num2, num3, chenNum) { console.log("calculateHexagram:", num1, num2, num3, chenNum);
   var upperRem = num1 % 8;
   var upperTri = TRIGRAM_MAP[upperRem];
   var lowerRem = num2 % 8;
