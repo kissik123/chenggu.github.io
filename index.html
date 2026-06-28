@@ -243,6 +243,29 @@
 
   .section { display: none; }
   .section.active { display: block; }
+
+/* ========== 易经占卦 ========== */
+.hexagram-lines { display: flex; flex-direction: column; gap: 4px; align-items: center; margin: 10px 0; }
+.hex-line { display: flex; justify-content: center; align-items: center; gap: 6px; }
+.hex-line .line-label { font-size: 10px; color: #6a5a4a; width: 18px; text-align: right; }
+.hex-line.old-yin { opacity: 0.7; }
+.hex-line.old-yang { opacity: 0.7; }
+.hex-line.changing .line-yang, .hex-line.changing .line-yin { box-shadow: 0 0 8px rgba(212,160,74,0.5); }
+.line-yang { width: 80px; height: 8px; background: #d4a04a; border-radius: 2px; }
+.line-yin { width: 80px; height: 8px; display: flex; gap: 12px; justify-content: center; }
+.line-yin::before, .line-yin::after { content: ''; width: 30px; height: 8px; background: #d4a04a; border-radius: 2px; }
+.hex-change-arrow { font-size: 24px; color: #d4a04a; margin: 0 12px; opacity: 0.6; }
+.dual-hex { display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; }
+.hex-box { text-align: center; }
+.hex-name { font-size: 18px; color: #d4a04a; letter-spacing: 2px; margin: 4px 0; }
+.hex-num { font-size: 11px; color: #6a5a4a; }
+.hex-judgment { font-size: 13px; color: #c0b098; line-height: 1.6; margin: 12px auto; max-width: 380px; text-align: center; }
+.hex-judgment-label { font-size: 11px; color: #6a5a4a; margin-bottom: 4px; letter-spacing: 1px; }
+.hex-divider { width: 60px; height: 1px; background: #3d3455; margin: 14px auto; }
+.changing-info { font-size: 12px; color: #d4a04a; text-align: center; margin: 8px 0; padding: 6px 12px; background: #1a1a2e; border-radius: 8px; }
+.hex-changed { font-size: 11px; color: #8a7a6a; text-align: center; margin-top: 4px; }
+.btn-gua { background: linear-gradient(135deg, #8B4513, #a0522d); color: #f0e0c0; font-weight: bold; font-size: 18px; padding: 14px; letter-spacing: 4px; }
+.btn-gua:hover { background: linear-gradient(135deg, #a0522d, #c07040); }
 </style>
 </head>
 <body>
@@ -358,6 +381,20 @@
   </div>
 </div>
 
+
+<!-- 易经占卦 -->
+<div class="card" id="gua-card">
+  <div class="card-title">☰ 易经占卦 ☷</div>
+  <div style="font-size: 12px; color: #8a7a6a; margin-bottom: 14px; line-height: 1.6; text-align: center;">
+    点击起卦，得本卦与变卦，观阴阳之变
+  </div>
+  <button class="btn btn-gua" onclick="divinate()" style="width:100%;">摇卦</button>
+
+  <div id="gua-result" class="result" style="margin-top:16px;">
+    <div id="hex-display"></div>
+    <div id="hex-judgment" class="hex-judgment"></div>
+  </div>
+</div>
 <script>
 // ============================================================
 // 农历数据（1900-2100年，简化版：春节日期 + 是否闰月 + 月大小）
@@ -1250,6 +1287,269 @@ function shareLink() {
 }
 
 // 初始化
+
+// ============ 易经六十四卦占卜 ============
+// 6位二进制 -> 卦序号 (0=坤, 63=乾)
+const HEX_LOOKUP = [
+  2, // 000000
+  23, // 000001
+  7, // 000010
+  20, // 000011
+  16, // 000100
+  36, // 000101
+  46, // 000110
+  12, // 000111
+  15, // 001000
+  51, // 001001
+  40, // 001010
+  54, // 001011
+  62, // 001100
+  56, // 001101
+  32, // 001110
+  34, // 001111
+  8, // 010000
+  4, // 010001
+  29, // 010010
+  60, // 010011
+  39, // 010100
+  63, // 010101
+  48, // 010110
+  6, // 010111
+  45, // 011000
+  18, // 011001
+  47, // 011010
+  58, // 011011
+  31, // 011100
+  49, // 011101
+  28, // 011110
+  43, // 011111
+  24, // 100000
+  27, // 100001
+  3, // 100010
+  41, // 100011
+  52, // 100100
+  21, // 100101
+  17, // 100110
+  25, // 100111
+  35, // 101000
+  22, // 101001
+  64, // 101010
+  38, // 101011
+  55, // 101100
+  30, // 101101
+  50, // 101110
+  13, // 101111
+  19, // 110000
+  42, // 110001
+  59, // 110010
+  61, // 110011
+  53, // 110100
+  37, // 110101
+  57, // 110110
+  9, // 110111
+  11, // 111000
+  26, // 111001
+  5, // 111010
+  10, // 111011
+  33, // 111100
+  14, // 111101
+  44, // 111110
+  1, // 111111
+];
+
+// 卦数据: [序号, 卦名, 卦辞]
+const HEX_DATA = [
+  null, // 0号位空
+  [1, '乾', '元亨利贞'],
+  [2, '坤', '元亨，利牪马之贞。君子有侂往，先迷后得主，利西南得朋，东北丧朋，安贞吉'],
+  [3, '衊', '元亨利贞。勿用有侂往，利建侯'],
+  [4, '蒙', '亨。非我求童蒙，童蒙求我。初篦告，再三渋，渋则不告。利贞'],
+  [5, '需', '有孚，光亨，贞吉。利涉大川'],
+  [6, '讼', '有孚置惕，中吉，终凶。利见大人，不利涉大川'],
+  [7, '师', '贞丈人吉，无咎'],
+  [8, '比', '吉。原篦元永贞，无咎。不宁方来，后夫凶'],
+  [9, '小畜', '亨。密云不雨，自我西郊'],
+  [10, '履', '履虎尾，不咨人，亨'],
+  [11, '泰', '小往大来，吉亨'],
+  [12, '否', '否之非人，不利君子贞，大往小来'],
+  [13, '同人', '同人于野，亨。利涉大川，利君子贞'],
+  [14, '大有', '元亨'],
+  [15, '谦', '亨。君子有终'],
+  [16, '豫', '利建侯行师'],
+  [17, '随', '元亨利贞，无咎'],
+  [18, '蛊', '元亨。利涉大川，先甲三日，后甲三日'],
+  [19, '临', '元亨利贞。至于八月有凶'],
+  [20, '观', '盔而不荐，有孚颜若'],
+  [21, '嗮嘄', '亨。利用狱'],
+  [22, '贶', '亨。小利有侂往'],
+  [23, '剥', '不利有侂往'],
+  [24, '复', '亨。出入无疾，朋来无咎。反复其道，七日来复，利有侂往'],
+  [25, '无妄', '元亨利贞。其非正有省，不利有侂往'],
+  [26, '大畜', '利贞。不家食吉，利涉大川'],
+  [27, '颐', '贞吉。观颐，自求口实'],
+  [28, '大过', '梁挠。利有侂往，亨'],
+  [29, '坎', '习坎，有孚，维心亨，行有尚'],
+  [30, '离', '利贞，亨。畜牪牛吉'],
+  [31, '咸', '亨，利贞。取女吉'],
+  [32, '恒', '亨，无咎。利贞，利有侂往'],
+  [33, '逝', '亨。小利贞'],
+  [34, '大壮', '利贞'],
+  [35, '晋', '康侯用锡马蕃泛，昼日三接'],
+  [36, '明夷', '利艰贞'],
+  [37, '家人', '利女贞'],
+  [38, '睽', '小事吉'],
+  [39, '蹇', '利西南，不利东北。利见大人，贞吉'],
+  [40, '解', '利西南。无所往，其来复吉。有侂往，宿吉'],
+  [41, '损', '有孚，元吉，无咎，可贞，利有侂往。曽之用？二篮可用享'],
+  [42, '益', '利有侂往，利涉大川'],
+  [43, '夬', '扬于王庭，孚号有厉。告自邑，不利即戎。利有侂往'],
+  [44, '姤', '女壮，勿用取女'],
+  [45, '萃', '亨。王假有庙。利见大人，亨利贞。用大牲吉，利有侂往'],
+  [46, '升', '元亨。用见大人，勿恴。南征吉'],
+  [47, '困', '亨。贞大人吉，无咎。有言不信'],
+  [48, '井', '改邑不改井，无丧无得。往来井井。汔至亦未繤井，罹其瓶，凶'],
+  [49, '革', '已日乃孚。元亨利贞，悔亡'],
+  [50, '鼎', '元吉，亨'],
+  [51, '震', '亨。震来虐虐，笑言哑哑。震惊百里，不丧匟匾'],
+  [52, '艮', '艮其背，不获其身。行其庭，不见其人。无咎'],
+  [53, '渐', '女归吉，利贞'],
+  [54, '归妹', '征凶，无侂利'],
+  [55, '丰', '亨。王假之，勿忧，宜日中'],
+  [56, '旅', '小亨。旅贞吉'],
+  [57, '川', '小亨。利有侂往，利见大人'],
+  [58, '兑', '亨，利贞'],
+  [59, '浣', '亨。王假有庙。利涉大川，利贞'],
+  [60, '节', '亨。苦节不可贞'],
+  [61, '中孚', '豚鱼吉。利涉大川，利贞'],
+  [62, '小过', '亨，利贞。可小事，不可大事。飞鸟遗之音，不宜上，宜下，大吉'],
+  [63, '既济', '亨小，利贞。初吉终乱'],
+  [64, '未济', '亨。小狐汔济，湥其尾，无侂利'],
+];
+
+// 随机生成一卦 (模拟三枚铜钱)
+function divinate() {
+  const result = document.getElementById('gua-result');
+  result.classList.add('show');
+  result.style.display = 'block';
+  
+  // 生成6个爻 (从下到上)
+  const lines = [];
+  const changes = [];
+  for (let i = 0; i < 6; i++) {
+    const coin = Math.floor(Math.random() * 4); // 0-3
+    // 0=老阴(变), 1=少阳, 2=少阴, 3=老阳(变)
+    const val = (coin === 0 || coin === 2) ? 0 : 1; // 0=阴, 1=阳
+    const changing = (coin === 0 || coin === 3);
+    lines.push(val);
+    changes.push(changing);
+  }
+  
+  // 计算本卦序号
+  let binary = 0;
+  for (let i = 0; i < 6; i++) {
+    if (lines[i] === 1) binary |= (1 << i);
+  }
+  const hexNum = HEX_LOOKUP[binary];
+  const hexData = HEX_DATA[hexNum];
+  
+  // 计算变卦
+  let changedBinary = 0;
+  const changedLines = [];
+  let hasChange = false;
+  for (let i = 0; i < 6; i++) {
+    if (changes[i]) {
+      changedLines.push(1 - lines[i]);
+      hasChange = true;
+    } else {
+      changedLines.push(lines[i]);
+    }
+    if (changedLines[i] === 1) changedBinary |= (1 << i);
+  }
+  
+  let changedHexNum = 0;
+  let changedData = null;
+  if (hasChange) {
+    changedHexNum = HEX_LOOKUP[changedBinary];
+    changedData = HEX_DATA[changedHexNum];
+  }
+  
+  renderHex(lines, changes, hexData, changedLines, changedData, hasChange);
+}
+
+function renderHex(lines, changes, hexData, changedLines, changedData, hasChange) {
+  const container = document.getElementById('hex-display');
+  let html = '';
+  
+  // 本卦
+  html += '<div class="dual-hex">';
+  html += '<div class="hex-box">';
+  html += '<div class="hex-num">本卦 第' + hexData[0] + '卦</div>';
+  html += '<div class="hex-name">' + hexData[1] + '</div>';
+  html += '<div class="hexagram-lines">';
+  for (let i = 5; i >= 0; i--) {
+    const cls = changes[i] ? 'changing' : '';
+    html += '<div class="hex-line ' + cls + '">';
+    html += '<span class="line-label">' + (i+1) + '</span>';
+    if (lines[i] === 1) {
+      html += '<div class="line-yang"></div>';
+    } else {
+      html += '<div class="line-yin"></div>';
+    }
+    if (changes[i]) html += '<span style="font-size:10px;color:#d4a04a;">▲</span>';
+    html += '</div>';
+  }
+  html += '</div></div>';
+  
+  // 变卦
+  if (hasChange && changedData) {
+    html += '<div class="hex-change-arrow">→</div>';
+    html += '<div class="hex-box">';
+    html += '<div class="hex-num">变卦 第' + changedData[0] + '卦</div>';
+    html += '<div class="hex-name">' + changedData[1] + '</div>';
+    html += '<div class="hexagram-lines">';
+    for (let i = 5; i >= 0; i--) {
+      html += '<div class="hex-line">';
+      html += '<span class="line-label">' + (i+1) + '</span>';
+      if (changedLines[i] === 1) {
+        html += '<div class="line-yang"></div>';
+      } else {
+        html += '<div class="line-yin"></div>';
+      }
+      html += '</div>';
+    }
+    html += '</div></div>';
+  }
+  html += '</div>';
+  
+  // 动爻信息
+  const changeIndices = [];
+  for (let i = 0; i < 6; i++) {
+    if (changes[i]) changeIndices.push(i+1);
+  }
+  if (changeIndices.length > 0) {
+    html += '<div class="changing-info">动爻: 第' + changeIndices.join('、第') + '爻变</div>';
+  } else {
+    html += '<div class="changing-info">六爻皆静，以本卦为主</div>';
+  }
+  
+  container.innerHTML = html;
+  
+  // 卦辞
+  const judgmentDiv = document.getElementById('hex-judgment');
+  let jHtml = '<div class="hex-divider"></div>';
+  jHtml += '<div class="hex-judgment-label">本卦「' + hexData[1] + '」卦辞</div>';
+  jHtml += '<div>' + hexData[2] + '</div>';
+  if (hasChange && changedData) {
+    jHtml += '<div class="hex-divider"></div>';
+    jHtml += '<div class="hex-judgment-label">变卦「' + changedData[1] + '」卦辞</div>';
+    jHtml += '<div>' + changedData[2] + '</div>';
+  }
+  judgmentDiv.innerHTML = jHtml;
+  
+  // 自动滚动到占卦卡片
+  document.getElementById('gua-card').scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
 initSelects();
 if (!loadFromUrlParams()) {
   // 无 URL 参数，使用默认值
