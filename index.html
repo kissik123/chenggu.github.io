@@ -1000,7 +1000,7 @@ function initSelects() {
   for (let i = 0; i < 12; i++) {
     const opt1 = document.createElement('option');
     opt1.value = i;
-    opt1.text = SHICHEN_NAME[i] + ' (23:00-01:00等)';
+    opt1.text = CHEN_PERIODS[i].name + ' (' + CHEN_PERIODS[i].range + ')';
     lh.appendChild(opt1);
 
     const opt2 = document.createElement('option');
