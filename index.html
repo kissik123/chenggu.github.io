@@ -999,12 +999,12 @@ function initSelects() {
   const sh = document.getElementById('shour');
   for (let i = 0; i < 12; i++) {
     const opt1 = document.createElement('option');
-    opt1.value = i;
+    opt1.value = i * 2 + 1;  // 1,3,5,7,9,11,13,15,17,19,21,23
     opt1.text = CHEN_PERIODS[i].name + ' (' + CHEN_PERIODS[i].range + ')';
     lh.appendChild(opt1);
 
     const opt2 = document.createElement('option');
-    opt2.value = i;
+    opt2.value = i * 2 + 1;  // 1,3,5,7,9,11,13,15,17,19,21,23
     opt2.text = SHICHEN_NAME[i];
     sh.appendChild(opt2);
   }
