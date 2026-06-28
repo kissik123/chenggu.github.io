@@ -1667,14 +1667,23 @@ function renderGuaResult(hexData, movingLine, changedData, num1, num2, num3, upp
 }
 
 // 页面加载时更新时辰
-updateCurrentChen();
-
-initSelects();
-if (!loadFromUrlParams()) {
-  // 无 URL 参数，使用默认值
-} else {
-  // URL 有参数，自动测算
-  setTimeout(() => calculate(), 300);
+try {
+  updateCurrentChen();
+  initSelects();
+  if (!loadFromUrlParams()) {
+    // 无 URL 参数，使用默认值
+  } else {
+    // URL 有参数，自动测算
+    setTimeout(() => calculate(), 300);
+  }
+  console.log('初始化完成');
+} catch(e) {
+  console.error('初始化错误:', e);
+  // 在页面上显示错误信息（方便调试）
+  var errDiv = document.createElement('div');
+  errDiv.style.cssText = 'color:#ff6b6b;background:#2a2440;padding:10px;margin:10px;border:1px solid #ff6b6b;border-radius:8px;font-size:12px;';
+  errDiv.textContent = '初始化错误: ' + e.message + '。请截图此信息并联系开发者。';
+  document.body.insertBefore(errDiv, document.body.firstChild);
 }
 </script>
 </body>
