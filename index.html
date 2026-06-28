@@ -261,8 +261,8 @@
   </div>
 
   <div class="toggle-row">
-    <button class="toggle-btn active" onclick="setMode('lunar')">按农历</button>
-    <button class="toggle-btn" onclick="setMode('solar')">按公历</button>
+    <button class="toggle-btn active" onclick="setMode('lunar', this)">按农历</button>
+    <button class="toggle-btn" onclick="setMode('solar', this)">按公历</button>
   </div>
 
   <!-- 农历输入 -->
@@ -957,10 +957,10 @@ function rebuildDays(year, month) {
 
 let inputMode = 'lunar';
 
-function setMode(mode) {
+function setMode(mode, btn) {
   inputMode = mode;
   document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  if (btn) btn.classList.add('active');
   document.getElementById('sec-lunar').classList.toggle('active', mode === 'lunar');
   document.getElementById('sec-solar').classList.toggle('active', mode === 'solar');
 }
@@ -1195,8 +1195,8 @@ function loadFromUrlParams() {
   const p = getUrlParams();
   if (!p.year) return false;
   try {
-    if (p.mode === 's') setMode('solar');
-    else setMode('lunar');
+    if (p.mode === 's') setMode('solar', null);
+    else setMode('lunar', null);
     if (p.gender === 'm') setGender('male');
     else setGender('female');
     if (inputMode === 'lunar') {
