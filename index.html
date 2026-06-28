@@ -266,6 +266,32 @@
 .hex-changed { font-size: 11px; color: #8a7a6a; text-align: center; margin-top: 4px; }
 .btn-gua { background: linear-gradient(135deg, #8B4513, #a0522d); color: #f0e0c0; font-weight: bold; font-size: 18px; padding: 14px; letter-spacing: 4px; }
 .btn-gua:hover { background: linear-gradient(135deg, #a0522d, #c07040); }
+
+.num-slot {
+  width: 72px; height: 72px;
+  background: #1a1a2e;
+  border: 2px solid #3d3455;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px; font-weight: bold; color: #d4a04a;
+  font-family: 'Courier New', monospace;
+  transition: border-color 0.3s;
+}
+.num-slot.spinning { border-color: #d4a04a; animation: pulse-border 0.15s infinite; }
+@keyframes pulse-border {
+  0%, 100% { border-color: #d4a04a; }
+  50% { border-color: #f0d080; }
+}
+.num-slot.stopped { border-color: #4a8a3a; }
+.question-display {
+  font-size: 13px; color: #e0d0c0;
+  padding: 8px 12px; background: #1a1a2e;
+  border-radius: 8px; margin-bottom: 12px;
+  text-align: center; line-height: 1.4;
+  border-left: 3px solid #d4a04a;
+}
+.question-label { font-size: 10px; color: #6a5a4a; margin-bottom: 3px; }
+
 </style>
 </head>
 <body>
@@ -385,16 +411,34 @@
 <!-- 易经占卦 -->
 <div class="card" id="gua-card">
   <div class="card-title">☰ 易经占卦 ☷</div>
-  <div style="font-size: 12px; color: #8a7a6a; margin-bottom: 14px; line-height: 1.6; text-align: center;">
-    点击起卦，得本卦与变卦，观阴阳之变
+  
+  <div style="margin-bottom:14px;">
+    <div style="font-size:12px;color:#8a7a6a;margin-bottom:6px;text-align:center;">默念您想问的事情，输入后摇卦</div>
+    <textarea id="gua-question" rows="2" placeholder="请输入您想问的事情..." style="width:100%;background:#1a1a2e;border:1px solid #3d3455;border-radius:8px;padding:10px;color:#e0d0c0;font-family:inherit;resize:none;box-sizing:border-box;font-size:13px;"></textarea>
   </div>
-  <button class="btn btn-gua" onclick="divinate()" style="width:100%;">摇卦</button>
-
-  <div id="gua-result" class="result" style="margin-top:16px;">
+  
+  <div style="text-align:center;margin-bottom:10px;font-size:12px;color:#6a5a4a;">
+    当前时辰：<span id="chen-name" style="color:#d4a04a;font-weight:bold;">辰时</span> 
+    <span id="chen-range">(07:00-09:00)</span>
+  </div>
+  
+  <div style="display:flex;justify-content:center;gap:14px;margin:10px 0 16px;">
+    <div class="num-slot" id="slot1">-</div>
+    <div class="num-slot" id="slot2">-</div>
+    <div class="num-slot" id="slot3">-</div>
+  </div>
+  
+  <div style="display:flex;gap:10px;">
+    <button class="btn btn-gua" id="btn-start" onclick="startGua()" style="flex:1;">开始摇卦</button>
+    <button class="btn btn-gua" id="btn-stop" onclick="stopGua()" style="flex:1;display:none;background:linear-gradient(135deg,#c0392b,#b03a2e);">停！</button>
+  </div>
+  
+  <div id="gua-result" class="result" style="margin-top:16px;display:none;">
     <div id="hex-display"></div>
     <div id="hex-judgment" class="hex-judgment"></div>
   </div>
 </div>
+/div>
 <script>
 // ============================================================
 // 农历数据（1900-2100年，简化版：春节日期 + 是否闰月 + 月大小）
@@ -1426,129 +1470,204 @@ const HEX_DATA = [
   [64, '未济', '亨。小狐汔济，湥其尾，无侂利'],
 ];
 
-// 随机生成一卦 (模拟三枚铜钱)
-function divinate() {
-  const result = document.getElementById('gua-result');
-  result.classList.add('show');
-  result.style.display = 'block';
-  
-  // 生成6个爻 (从下到上)
-  const lines = [];
-  const changes = [];
-  for (let i = 0; i < 6; i++) {
-    const coin = Math.floor(Math.random() * 4); // 0-3
-    // 0=老阴(变), 1=少阳, 2=少阴, 3=老阳(变)
-    const val = (coin === 0 || coin === 2) ? 0 : 1; // 0=阴, 1=阳
-    const changing = (coin === 0 || coin === 3);
-    lines.push(val);
-    changes.push(changing);
-  }
-  
-  // 计算本卦序号
-  let binary = 0;
-  for (let i = 0; i < 6; i++) {
-    if (lines[i] === 1) binary |= (1 << i);
-  }
-  const hexNum = HEX_LOOKUP[binary];
-  const hexData = HEX_DATA[hexNum];
-  
-  // 计算变卦
-  let changedBinary = 0;
-  const changedLines = [];
-  let hasChange = false;
-  for (let i = 0; i < 6; i++) {
-    if (changes[i]) {
-      changedLines.push(1 - lines[i]);
-      hasChange = true;
-    } else {
-      changedLines.push(lines[i]);
-    }
-    if (changedLines[i] === 1) changedBinary |= (1 << i);
-  }
-  
-  let changedHexNum = 0;
-  let changedData = null;
-  if (hasChange) {
-    changedHexNum = HEX_LOOKUP[changedBinary];
-    changedData = HEX_DATA[changedHexNum];
-  }
-  
-  renderHex(lines, changes, hexData, changedLines, changedData, hasChange);
+// 梅花易数占卦逻辑 (替换掉旧的 divinate + renderHex)
+
+// 洛书数→八卦映射
+const TRIGRAM_MAP = {
+  1: {name: '乾', binary: 7}, 2: {name: '兑', binary: 6},
+  3: {name: '离', binary: 5}, 4: {name: '震', binary: 4},
+  5: {name: '巽', binary: 3}, 6: {name: '坎', binary: 2},
+  7: {name: '艮', binary: 1}, 0: {name: '坤', binary: 0}
+};
+
+// 十二时辰
+const CHEN_PERIODS = [
+  {num: 1, name: '子时', range: '23:00-01:00'},
+  {num: 2, name: '丑时', range: '01:00-03:00'},
+  {num: 3, name: '寅时', range: '03:00-05:00'},
+  {num: 4, name: '卯时', range: '05:00-07:00'},
+  {num: 5, name: '辰时', range: '07:00-09:00'},
+  {num: 6, name: '巳时', range: '09:00-11:00'},
+  {num: 7, name: '午时', range: '11:00-13:00'},
+  {num: 8, name: '未时', range: '13:00-15:00'},
+  {num: 9, name: '申时', range: '15:00-17:00'},
+  {num: 10, name: '酉时', range: '17:00-19:00'},
+  {num: 11, name: '戌时', range: '19:00-21:00'},
+  {num: 12, name: '亥时', range: '21:00-23:00'}
+];
+
+let rollingInterval = null;
+let rolling = false;
+let slotValues = [0, 0, 0];
+let slotStopped = [false, false, false];
+
+function updateCurrentChen() {
+  const h = new Date().getHours();
+  let idx;
+  if (h >= 23 || h < 1) idx = 0;
+  else if (h < 3) idx = 1;
+  else if (h < 5) idx = 2;
+  else if (h < 7) idx = 3;
+  else if (h < 9) idx = 4;
+  else if (h < 11) idx = 5;
+  else if (h < 13) idx = 6;
+  else if (h < 15) idx = 7;
+  else if (h < 17) idx = 8;
+  else if (h < 19) idx = 9;
+  else if (h < 21) idx = 10;
+  else idx = 11;
+  const chen = CHEN_PERIODS[idx];
+  const nEl = document.getElementById('chen-name');
+  const rEl = document.getElementById('chen-range');
+  if (nEl && rEl) { nEl.textContent = chen.name; rEl.textContent = '(' + chen.range + ')'; }
+  return chen;
 }
 
-function renderHex(lines, changes, hexData, changedLines, changedData, hasChange) {
-  const container = document.getElementById('hex-display');
-  let html = '';
-  
-  // 本卦
+function startGua() {
+  if (rolling) return;
+  const question = document.getElementById('gua-question').value.trim();
+  if (!question) { alert('请先输入您想问的事情'); return; }
+  rolling = true;
+  document.getElementById('btn-start').style.display = 'none';
+  document.getElementById('btn-stop').style.display = 'block';
+  document.getElementById('gua-result').style.display = 'none';
+  slotStopped = [false, false, false];
+  slotValues = [0, 0, 0];
+  const slots = [document.getElementById('slot1'), document.getElementById('slot2'), document.getElementById('slot3')];
+  slots.forEach(function(s) { s.classList.add('spinning'); s.classList.remove('stopped'); });
+  rollingInterval = setInterval(function() {
+    for (var i = 0; i < 3; i++) {
+      if (!slotStopped[i]) {
+        slotValues[i] = Math.floor(Math.random() * 99) + 1;
+        slots[i].textContent = slotValues[i];
+      }
+    }
+  }, 60);
+}
+
+function stopGua() {
+  if (!rolling) return;
+  rolling = false;
+  if (rollingInterval) { clearInterval(rollingInterval); rollingInterval = null; }
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('btn-start').style.display = 'block';
+  var slots = [document.getElementById('slot1'), document.getElementById('slot2'), document.getElementById('slot3')];
+  slots.forEach(function(s) { s.classList.remove('spinning'); s.classList.add('stopped'); });
+  var chen = updateCurrentChen();
+  calculateHexagram(slotValues[0], slotValues[1], slotValues[2], chen.num);
+}
+
+function calculateHexagram(num1, num2, num3, chenNum) {
+  var upperRem = num1 % 8;
+  var upperTri = TRIGRAM_MAP[upperRem];
+  var lowerRem = num2 % 8;
+  var lowerTri = TRIGRAM_MAP[lowerRem];
+  var movingLine = (num3 + chenNum) % 6;
+  if (movingLine === 0) movingLine = 6;
+  var hexBinary = (upperTri.binary << 3) | lowerTri.binary;
+  var hexNum = HEX_LOOKUP[hexBinary];
+  var hexData = HEX_DATA[hexNum];
+  var changingBit = movingLine - 1;
+  var changedBinary = hexBinary ^ (1 << changingBit);
+  var changedHexNum = HEX_LOOKUP[changedBinary];
+  var changedData = HEX_DATA[changedHexNum];
+  renderGuaResult(hexData, movingLine, changedData, num1, num2, num3, upperTri, lowerTri, chenNum);
+}
+
+function renderGuaResult(hexData, movingLine, changedData, num1, num2, num3, upperTri, lowerTri, chenNum) {
+  var question = document.getElementById('gua-question').value.trim();
+  document.getElementById('gua-result').style.display = 'block';
+  var chen = CHEN_PERIODS[chenNum - 1];
+  var bin = 0;
+  for (var i = 0; i < 64; i++) { if (HEX_LOOKUP[i] === hexData[0]) { bin = i; break; } }
+  var lines = [];
+  for (var i = 0; i < 6; i++) lines.push((bin >> i) & 1);
+  var chBin = 0;
+  if (changedData) { for (var i = 0; i < 64; i++) { if (HEX_LOOKUP[i] === changedData[0]) { chBin = i; break; } } }
+  else { chBin = bin; }
+  var chLines = [];
+  for (var i = 0; i < 6; i++) chLines.push((chBin >> i) & 1);
+
+  var html = '';
+  html += '<div class="question-display"><div class="question-label">问事</div><div>' + question + '</div></div>';
+
+  html += '<div style="font-size:11px;color:#6a5a4a;text-align:center;margin-bottom:10px;">';
+  html += '时 ' + chen.name + ' ' + chen.range + ' &nbsp;|&nbsp; ';
+  html += '数 ' + num1 + ' ' + num2 + ' ' + num3;
+  html += '<br>上卦=' + upperTri.name + '(' + (num1 % 8 === 0 ? 8 : num1 % 8) + ')';
+  html += ' 下卦=' + lowerTri.name + '(' + (num2 % 8 === 0 ? 8 : num2 % 8) + ')';
+  html += ' 动爻=' + movingLine;
+  html += '</div>';
+
   html += '<div class="dual-hex">';
+
+  // 本卦
   html += '<div class="hex-box">';
   html += '<div class="hex-num">本卦 第' + hexData[0] + '卦</div>';
   html += '<div class="hex-name">' + hexData[1] + '</div>';
   html += '<div class="hexagram-lines">';
-  for (let i = 5; i >= 0; i--) {
-    const cls = changes[i] ? 'changing' : '';
-    html += '<div class="hex-line ' + cls + '">';
+  for (var i = 5; i >= 0; i--) {
+    var isMoving = (i + 1 === movingLine);
+    html += '<div class="hex-line ' + (isMoving ? 'changing' : '') + '">';
     html += '<span class="line-label">' + (i+1) + '</span>';
-    if (lines[i] === 1) {
-      html += '<div class="line-yang"></div>';
-    } else {
-      html += '<div class="line-yin"></div>';
-    }
-    if (changes[i]) html += '<span style="font-size:10px;color:#d4a04a;">▲</span>';
+    if (lines[i] === 1) { html += '<div class="line-yang"></div>'; }
+    else { html += '<div class="line-yin"></div>'; }
+    if (isMoving) html += '<span style="font-size:10px;color:#d4a04a;">●</span>';
     html += '</div>';
   }
   html += '</div></div>';
-  
-  // 变卦
-  if (hasChange && changedData) {
+
+  // 箭头+变卦
+  if (changedData && movingLine > 0) {
     html += '<div class="hex-change-arrow">→</div>';
     html += '<div class="hex-box">';
     html += '<div class="hex-num">变卦 第' + changedData[0] + '卦</div>';
     html += '<div class="hex-name">' + changedData[1] + '</div>';
     html += '<div class="hexagram-lines">';
-    for (let i = 5; i >= 0; i--) {
+    for (var i = 5; i >= 0; i--) {
       html += '<div class="hex-line">';
       html += '<span class="line-label">' + (i+1) + '</span>';
-      if (changedLines[i] === 1) {
-        html += '<div class="line-yang"></div>';
-      } else {
-        html += '<div class="line-yin"></div>';
-      }
+      if (chLines[i] === 1) { html += '<div class="line-yang"></div>'; }
+      else { html += '<div class="line-yin"></div>'; }
+      if (i+1 === movingLine) html += '<span style="font-size:10px;color:#d4a04a;opacity:0.5;">○</span>';
       html += '</div>';
     }
     html += '</div></div>';
   }
-  html += '</div>';
-  
-  // 动爻信息
-  const changeIndices = [];
-  for (let i = 0; i < 6; i++) {
-    if (changes[i]) changeIndices.push(i+1);
-  }
-  if (changeIndices.length > 0) {
-    html += '<div class="changing-info">动爻: 第' + changeIndices.join('、第') + '爻变</div>';
+  html += '</div>'; // end dual-hex
+
+  // 动爻提示
+  if (movingLine > 0) {
+    html += '<div class="changing-info">第' + movingLine + '爻动 → 本卦变' + changedData[1] + '</div>';
   } else {
-    html += '<div class="changing-info">六爻皆静，以本卦为主</div>';
+    html += '<div class="changing-info">无动爻，以本卦为主</div>';
   }
-  
-  container.innerHTML = html;
-  
+  document.getElementById('hex-display').innerHTML = html;
+
   // 卦辞
-  const judgmentDiv = document.getElementById('hex-judgment');
-  let jHtml = '<div class="hex-divider"></div>';
+  var jHtml = '<div class="hex-divider"></div>';
   jHtml += '<div class="hex-judgment-label">本卦「' + hexData[1] + '」卦辞</div>';
   jHtml += '<div>' + hexData[2] + '</div>';
-  if (hasChange && changedData) {
+  if (changedData) {
     jHtml += '<div class="hex-divider"></div>';
     jHtml += '<div class="hex-judgment-label">变卦「' + changedData[1] + '」卦辞</div>';
     jHtml += '<div>' + changedData[2] + '</div>';
   }
-  judgmentDiv.innerHTML = jHtml;
-  
-  // 自动滚动到占卦卡片
-  document.getElementById('gua-card').scrollIntoView({behavior: 'smooth', block: 'start'});
+  jHtml += '<div class="hex-divider"></div>';
+  jHtml += '<div style="font-size:11px;color:#6a5a4a;text-align:center;margin-top:10px;">';
+  jHtml += '【解卦要点】本卦为当前状态，变卦为发展结果，动爻为关键节点。<br>';
+  jHtml += '爻动则变，静则守。多爻动以本卦为主，一爻动以该爻为准。';
+  jHtml += '</div>';
+  document.getElementById('hex-judgment').innerHTML = jHtml;
+
+  setTimeout(function() {
+    var el = document.getElementById('gua-card');
+    if (el) el.scrollIntoView({behavior: 'smooth', block: 'start'});
+  }, 100);
 }
+
+// 页面加载时更新时辰
+updateCurrentChen();
 
 initSelects();
 if (!loadFromUrlParams()) {
